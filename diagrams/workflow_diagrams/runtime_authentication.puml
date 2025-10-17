@@ -1,0 +1,41 @@
+@startuml runtime_authentication
+title User Authentication Workflow (Simplified)
+
+actor "User" as user
+participant "Web App" as web
+participant "Backend\nServer" as backend
+database "Database" as db
+
+== Registration ==
+user -> web: Enter email, password
+web -> backend: POST /register
+backend -> db: Check if email exists
+db -> backend: Email available
+backend -> db: Create user account
+backend -> web: Registration successful
+web -> user: Show "Check your email"
+
+== Login ==
+user -> web: Enter email, password
+web -> backend: POST /login
+backend -> db: Verify credentials
+db -> backend: User found
+backend -> backend: Create session token (JWT)
+backend -> web: Send token + user info
+web -> user: Redirect to chat page
+
+== Accessing Protected Pages ==
+user -> web: Click on chat/profile
+web -> backend: Request with JWT token
+backend -> backend: Verify token
+backend -> web: Return data
+web -> user: Show page
+
+note right of backend
+  **Security:**
+  - Password hashing (bcrypt)
+  - JWT for sessions
+  - Token expiry
+end note
+
+@enduml

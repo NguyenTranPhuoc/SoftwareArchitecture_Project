@@ -1,0 +1,41 @@
+@startuml runtime_messaging
+title Real-time Messaging Workflow (Simplified)
+
+actor "User A" as userA
+actor "User B" as userB
+participant "Web App A" as webA
+participant "Web App B" as webB
+participant "Backend\nServer" as backend
+database "Chat\nDatabase" as db
+
+== Sending a Message ==
+userA -> webA: Type "Hello" and click Send
+webA -> backend: POST /messages\n{to: userB, content: "Hello"}
+backend -> db: Save message to database
+db -> backend: Message saved
+backend -> webB: WebSocket: New message
+backend -> webA: Message sent confirmation
+webB -> userB: Display "User A: Hello"
+webA -> userA: Show message as sent
+
+== Typing Indicator ==
+userA -> webA: Start typing...
+webA -> backend: WebSocket: User A is typing
+backend -> webB: WebSocket: User A is typing
+webB -> userB: Show "User A is typing..."
+
+== Read Receipt ==
+userB -> webB: Open message
+webB -> backend: WebSocket: Message read
+backend -> webA: WebSocket: Message was read
+webA -> userA: Show "Read" checkmark
+
+note right of backend
+  **Real-time Features:**
+  - WebSocket connection
+  - Instant message delivery
+  - Typing indicators
+  - Read receipts
+end note
+
+@enduml

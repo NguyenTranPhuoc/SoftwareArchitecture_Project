@@ -1,0 +1,45 @@
+@startuml group_chat_workflow
+title Group Chat Workflow (Simplified)
+
+actor "User A\n(Admin)" as userA
+actor "User B" as userB
+actor "User C" as userC
+participant "Web App" as web
+participant "Backend\nServer" as backend
+database "Database" as db
+
+== Creating a Group ==
+userA -> web: Click "Create Group"
+userA -> web: Enter name "Family Group"
+web -> backend: POST /conversations\n{type: "group", name: "Family Group"}
+backend -> db: Create group conversation
+backend -> db: Add User A as admin
+backend -> web: Group created
+web -> userA: Show group page
+
+== Adding Members ==
+userA -> web: Select User B and User C
+web -> backend: POST /conversations/{id}/members\n{members: [userB, userC]}
+backend -> db: Add members to group
+backend -> web: Members added
+web -> userB: Notification: "Added to Family Group"
+web -> userC: Notification: "Added to Family Group"
+
+== Sending Group Message ==
+userB -> web: Type "Hello everyone!"
+web -> backend: POST /messages\n{conversation_id: group_id, content: "Hello everyone!"}
+backend -> db: Save message
+backend -> web: Broadcast to all members
+web -> userA: Display "User B: Hello everyone!"
+web -> userB: Message sent
+web -> userC: Display "User B: Hello everyone!"
+
+note right of backend
+  **Group Features:**
+  - Create group
+  - Add/remove members
+  - Admin privileges
+  - Group messaging
+end note
+
+@enduml

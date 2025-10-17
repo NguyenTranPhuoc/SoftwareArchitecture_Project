@@ -1,0 +1,81 @@
+@startuml database_design
+title Database Design - Core Entities (Simplified)
+
+!theme plain
+skinparam linetype ortho
+
+entity "users" {
+  * id : UUID <<PK>>
+  --
+  * email : VARCHAR(255)
+  * phone : VARCHAR(20)
+  * password_hash : VARCHAR(255)
+  * display_name : VARCHAR(100)
+  * avatar_url : VARCHAR(500)
+  * status : ENUM('active', 'inactive')
+  * created_at : TIMESTAMP
+}
+
+entity "friendships" {
+  * id : UUID <<PK>>
+  --
+  * user_id_1 : UUID <<FK>>
+  * user_id_2 : UUID <<FK>>
+  * status : ENUM('pending', 'accepted')
+  * created_at : TIMESTAMP
+}
+
+entity "conversations" {
+  * id : UUID <<PK>>
+  --
+  * type : ENUM('direct', 'group')
+  * name : VARCHAR(255)
+  * created_at : TIMESTAMP
+}
+
+entity "conversation_members" {
+  * id : UUID <<PK>>
+  --
+  * conversation_id : UUID <<FK>>
+  * user_id : UUID <<FK>>
+  * role : ENUM('member', 'admin')
+  * joined_at : TIMESTAMP
+}
+
+entity "messages" {
+  * id : UUID <<PK>>
+  --
+  * conversation_id : UUID <<FK>>
+  * sender_id : UUID <<FK>>
+  * content : TEXT
+  * message_type : ENUM('text', 'image', 'file')
+  * file_url : VARCHAR(500)
+  * created_at : TIMESTAMP
+}
+
+' Relationships
+users ||--o{ friendships : "has friends"
+users ||--o{ conversation_members : "joins"
+users ||--o{ messages : "sends"
+
+conversations ||--o{ conversation_members : "has members"
+conversations ||--o{ messages : "contains"
+
+note right of users
+  Main user table
+  Stores credentials
+  and profile info
+end note
+
+note right of messages
+  Stores all chat messages
+  Both text and files
+end note
+
+note bottom of conversations
+  **Two Types:**
+  - Direct: 1-to-1 chat
+  - Group: Multi-user chat
+end note
+
+@enduml

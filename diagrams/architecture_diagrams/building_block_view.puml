@@ -1,0 +1,61 @@
+@startuml building_block_view
+title Building Block View - Zalo Clone Internal Components (Simplified)
+
+!theme plain
+
+package "Frontend Layer" {
+    [Web Application\n(React)]
+    [Mobile Application\n(React Native)]
+}
+
+package "Backend Services" {
+    [Authentication\nService]
+    [User Management\nService]
+    [Chat & Messaging\nService]
+    [File Upload\nService]
+}
+
+database "User Database\n(PostgreSQL)" as userDB
+database "Chat Database\n(MongoDB)" as chatDB
+database "Cache\n(Redis)" as cache
+
+cloud "Google Cloud Storage" as storage
+
+[Web Application\n(React)] --> [Authentication\nService] : Login/Register
+[Web Application\n(React)] --> [User Management\nService] : Manage profile,\nfriends
+[Web Application\n(React)] --> [Chat & Messaging\nService] : Send/receive\nmessages
+[Web Application\n(React)] --> [File Upload\nService] : Upload images,\nvideos
+
+[Mobile Application\n(React Native)] --> [Authentication\nService] : Login/Register
+[Mobile Application\n(React Native)] --> [User Management\nService] : Manage profile,\nfriends
+[Mobile Application\n(React Native)] --> [Chat & Messaging\nService] : Send/receive\nmessages
+[Mobile Application\n(React Native)] --> [File Upload\nService] : Upload images,\nvideos
+
+[Authentication\nService] --> userDB : Store user\ncredentials
+[Authentication\nService] --> cache : Store sessions
+
+[User Management\nService] --> userDB : User profiles,\nfriendships
+
+[Chat & Messaging\nService] --> chatDB : Store messages
+[Chat & Messaging\nService] --> cache : Online status,\ntyping indicators
+
+[File Upload\nService] --> storage : Store files
+
+note bottom of "Backend Services"
+  All services built with Node.js
+  Use REST API + WebSocket
+  Deployed on Google Cloud Platform
+end note
+
+note top of "Frontend Layer"
+  **Web**: React.js for browsers
+  **Mobile**: React Native for iOS/Android
+  Shared code and API integration
+end note
+
+note bottom of storage
+  Google Cloud Storage
+  for media files
+end note
+
+@enduml

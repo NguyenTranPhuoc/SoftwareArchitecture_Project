@@ -1,0 +1,66 @@
+@startuml layered_architecture
+title Layered Architecture - Simplified 4-Layer Design
+
+!theme plain
+skinparam packageStyle rectangle
+
+package "1. Presentation Layer" as layer1 {
+    [Web Interface (React)]
+    [Mobile App (React Native)]
+    note right: User-facing UI components\nfor Web and Mobile
+}
+
+package "2. Business Logic Layer" as layer2 {
+    [Controllers & Services]
+    note right: Handle requests,\nprocess business rules
+}
+
+package "3. Data Access Layer" as layer3 {
+    [Database Models & Repositories]
+    note right: Manage database\noperations
+}
+
+package "4. Infrastructure Layer" as layer4 {
+    database "Database" as db
+    cloud "Google Cloud\nServices" as external
+    note right: Physical data storage\nand Google Cloud APIs
+}
+
+[Web Interface (React)] --> [Controllers & Services] : HTTP/WebSocket\nrequests
+[Mobile App (React Native)] --> [Controllers & Services] : HTTP/WebSocket\nrequests
+[Controllers & Services] --> [Database Models & Repositories] : Query/Update\ndata
+[Database Models & Repositories] --> db : SQL/NoSQL queries
+[Controllers & Services] --> external : Email, File storage
+
+note bottom of layer1
+  **Layer 1: Presentation**
+  - React components (Web)
+  - React Native (Mobile)
+  - User interactions
+  - Display logic
+end note
+
+note bottom of layer2
+  **Layer 2: Business Logic**
+  - User management
+  - Chat logic
+  - Friend requests
+  - Authentication
+end note
+
+note bottom of layer3
+  **Layer 3: Data Access**
+  - User repository
+  - Message repository
+  - Data mapping
+end note
+
+note bottom of layer4
+  **Layer 4: Infrastructure**
+  - PostgreSQL (users)
+  - MongoDB (messages)
+  - Redis (cache)
+  - Google Cloud Storage
+end note
+
+@enduml

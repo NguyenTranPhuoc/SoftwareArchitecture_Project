@@ -1,0 +1,72 @@
+@startuml deployment_view
+title Deployment View - Google Cloud Platform Deployment (Simplified)
+
+!theme plain
+
+node "User's Computer" as client {
+    component [Web Browser]
+}
+
+node "Mobile Device" as mobile {
+    component [Mobile App\n(iOS/Android)]
+}
+
+cloud "Google Cloud Platform" as cloud {
+    node "Application Server" as appserver {
+        component [Node.js Backend\n(Express + Socket.io)]
+        component [React Frontend\n(Static Files)]
+    }
+    
+    database "PostgreSQL\nDatabase" as postgres {
+    }
+    
+    database "MongoDB\nDatabase" as mongo {
+    }
+    
+    database "Redis Cache" as redis {
+    }
+    
+    storage "Google Cloud Storage" as files {
+    }
+}
+
+[Web Browser] --> [React Frontend\n(Static Files)] : HTTPS
+[Web Browser] --> [Node.js Backend\n(Express + Socket.io)] : HTTPS/WebSocket
+
+[Mobile App\n(iOS/Android)] --> [Node.js Backend\n(Express + Socket.io)] : HTTPS/WebSocket
+
+[Node.js Backend\n(Express + Socket.io)] --> postgres : User data,\nfriendships
+[Node.js Backend\n(Express + Socket.io)] --> mongo : Chat messages,\nconversations
+[Node.js Backend\n(Express + Socket.io)] --> redis : Sessions,\nonline status
+[Node.js Backend\n(Express + Socket.io)] --> files : Images,\nvideos, docs
+
+note right of cloud
+  **Google Cloud Services:**
+  - Compute Engine (VM)
+  - Cloud SQL (PostgreSQL)
+  - Cloud Firestore/MongoDB Atlas
+  - Memorystore (Redis)
+  - Cloud Storage (Files)
+  
+  **Components:**
+  - Application server (Node.js)
+  - Three databases
+  - Cloud file storage
+end note
+
+note left of client
+  **Web Access:**
+  - Chrome
+  - Firefox
+  - Safari
+  - Edge
+end note
+
+note left of mobile
+  **Mobile Platforms:**
+  - iOS (React Native)
+  - Android (React Native)
+  - Cross-platform code
+end note
+
+@enduml

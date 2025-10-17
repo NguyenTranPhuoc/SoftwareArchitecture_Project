@@ -1,0 +1,41 @@
+@startuml system_context
+title System Context View - Zalo Clone App (Simplified)
+
+!theme plain
+skinparam componentStyle rectangle
+
+actor "User\n(Web)" as user_web
+actor "User\n(Mobile)" as user_mobile
+actor "Admin" as admin
+
+rectangle "Zalo Clone\nMessaging App" as app {
+}
+
+cloud "Email Service\n(Gmail/SendGrid)" as email
+cloud "Google Cloud Storage" as storage
+
+user_web --> app : Login, Send messages,\nManage contacts\n(via Web Browser)
+user_mobile --> app : Login, Send messages,\nManage contacts\n(via Mobile App)
+admin --> app : View statistics,\nManage system
+
+app --> email : Send verification emails
+app --> storage : Store/retrieve\nimages & files
+
+note right of app
+  Main Features:
+  - User authentication
+  - Real-time messaging
+  - Contact management
+  - File sharing
+  
+  Accessible via:
+  - Web Browser (React)
+  - Mobile App (React Native)
+end note
+
+note bottom of storage
+  Using Google Cloud Storage
+  for all media files
+end note
+
+@enduml
