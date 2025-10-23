@@ -4,8 +4,6 @@ A comprehensive real-time messaging application inspired by Zalo, designed and i
 
 **Repository**: https://github.com/NguyenTranPhuoc/SoftwareArchitecture_Project
 
-```
-
 ---
 
 ## Architecture Overview
@@ -71,7 +69,7 @@ zalo-clone/
 - **Redis**: Caching and sessions
 - **Google Cloud Storage**: File storage
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend
 - **React.js** with TypeScript (Web)
@@ -93,7 +91,7 @@ zalo-clone/
   - Cloud Storage (File storage)
 - **Firebase Hosting** (Frontend deployment)
 
-## 📊 Architecture Diagrams
+## Architecture Diagrams
 
 The project includes comprehensive PlantUML diagrams following the **ARC42** documentation standard:
 
@@ -104,7 +102,7 @@ The project includes comprehensive PlantUML diagrams following the **ARC42** doc
 5. **Entity Relationship** - Database design
 6. **Runtime Views** - Authentication, messaging, group chat workflows
 
-## 👥 Team Structure (5 Members )
+##  Team Structure (5 Members )
 
 - **Huynh Nhu**: User + Auth + Postgres
 - **Nhan**:  Chat + Redis + MongoDB
