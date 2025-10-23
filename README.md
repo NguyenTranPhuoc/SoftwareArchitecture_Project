@@ -4,7 +4,11 @@ A comprehensive real-time messaging application inspired by Zalo, designed and i
 
 **Repository**: https://github.com/NguyenTranPhuoc/SoftwareArchitecture_Project
 
-## 🏗️ Architecture Overview
+```
+
+---
+
+## Architecture Overview
 
 This project demonstrates a **Layered Architecture** with **MVC pattern**, showcasing modern software engineering principles and practices suitable for enterprise-level applications.
 
@@ -16,7 +20,7 @@ This project demonstrates a **Layered Architecture** with **MVC pattern**, showc
 - Multimedia file sharing (images, videos, documents)
 - Mobile app support (iOS & Android)
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 zalo-clone/
@@ -46,7 +50,7 @@ zalo-clone/
 └── 📋 Requirement_EN.md             # Project requirements
 ```
 
-## 🎯 Architecture Highlights
+## Architecture Highlights
 
 ### 1. **Layered Architecture**
 - **Presentation Layer**: React.js web + React Native mobile
@@ -102,20 +106,15 @@ The project includes comprehensive PlantUML diagrams following the **ARC42** doc
 
 ## 👥 Team Structure (5 Members )
 
-- **Member 1**: Frontend Web Developer (React.js)
-- **Member 2**: Mobile Developer (React Native)
-- **Member 3**: Backend Developer - Auth & Users (Express.js, PostgreSQL)
-- **Member 4**: Backend Developer - Chat & Messaging (Socket.io, MongoDB)
-- **Member 5**: DevOps & Database Admin (Google Cloud Platform)
+- **Huynh Nhu**: User + Auth + Postgres
+- **Nhan**:  Chat + Redis + MongoDB
+- **Manh**:  Frontend app + Google Could
+- **Quynh Nhu**: Frontend web + Google Cloud
+- **Phuoc**: DevOps & Database Admin (Google Cloud Platform)
 
 See detailed task breakdown in the [`tasks/`](tasks/) folder.
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js (v18+)
-- Git
-- Google Cloud account (for deployment)
+## Getting Started
 
 ### Installation
 ```bash
@@ -133,7 +132,7 @@ cp .env.example .env
 npm run dev
 ```
 
-## 📚 Documentation
+## Documentation
 
 - **[Architecture Justification](docs/architecture_docs/Architecture_Justification.md)** - Why we chose this architecture
 - **[Requirements](Requirement_EN.md)** - Functional and non-functional requirements
