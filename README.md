@@ -22,30 +22,37 @@ This project demonstrates a **Layered Architecture** with **MVC pattern**, showc
 
 ```
 zalo-clone/
-├── 📂 src/                          # Source code
-│   ├── 📂 client/                   # Frontend React web application
-│   ├── 📂 server/                   # Backend Node.js application
-│   └── 📂 shared/                   # Shared code between client/server
+├── src/                          # Source code
+│   ├── client/                   # Frontend React web application
+│   ├── server/                   # Backend Node.js application
+│   └── shared/                   # Shared code between client/server
 │
-├── 📂 docs/                         # Documentation
-│   ├── 📂 api/                      # API documentation
-│   ├── 📂 architecture/             # Architecture documentation
-│   └── 📂 user-guide/               # User guides
+├── docs/                         # Documentation
+│   ├── GCP_SETUP_GUIDE.md        # GCP deployment guide
+│   ├── CHAT_UPLOAD_GUIDE.md      # Chat upload API
+│   ├── IMAGE_DISPLAY_GUIDE.md    # Image display guide
+│   ├── DEPLOYMENT_FIX.md         # Deployment fixes
+│   ├── TROUBLESHOOTING.md        # Common issues
+│   └── DEVOPS_ACTION_PLAN.md     # DevOps action plan
 │
-├── 📂 diagrams/                     # PlantUML architectural diagrams
-│   ├── 📂 architecture_diagrams/    # System architecture views
-│   ├── 📂 database_diagrams/        # Database design
-│   └── 📂 workflow_diagrams/        # Runtime behavior
+├── public/                       # Static files for testing
+│   ├── index.html                # Test homepage
+│   ├── chat-demo.html            # Chat interface demo
+│   └── chat-upload-test.html     # Upload test page
 │
-├── 📂 tasks/                        # Team task distribution (5 members)
-
+├── diagrams/                     # PlantUML architectural diagrams
+│   ├── architecture_diagrams/    # System architecture views
+│   ├── database_diagrams/        # Database design
+│   └── workflow_diagrams/        # Runtime behavior
 │
-├── 📂 tests/                        # Test suites
-│   ├── 📂 client/                   # Frontend tests
-│   ├── 📂 server/                   # Backend tests
-│   └── 📂 integration/              # Integration tests
+├── tasks/                        # Team task distribution
 │
-└── 📋 Requirement_EN.md             # Project requirements
+├── tests/                        # Test suites
+│   ├── client/                   # Frontend tests
+│   ├── server/                   # Backend tests
+│   └── integration/              # Integration tests
+│
+└── Requirement_EN.md             # Project requirements
 ```
 
 ## Architecture Highlights
@@ -132,6 +139,28 @@ npm run dev
 
 ## Documentation
 
-- **[Architecture Justification](docs/architecture_docs/Architecture_Justification.md)** - Why we chose this architecture
-- **[Requirements](Requirement_EN.md)** - Functional and non-functional requirements
+### Deployment and DevOps
+- **[GCP Setup Guide](docs/GCP_SETUP_GUIDE.md)** - Deploy to Google Cloud Platform
+- **[Deployment Fix](docs/DEPLOYMENT_FIX.md)** - Deployment troubleshooting
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[DevOps Action Plan](docs/DEVOPS_ACTION_PLAN.md)** - DevOps tasks
+
+### Chat Upload Feature
+- **[Chat Upload Guide](docs/CHAT_UPLOAD_GUIDE.md)** - File upload API documentation
+- **[Image Display Guide](docs/IMAGE_DISPLAY_GUIDE.md)** - Display images in chat
+
+### Architecture
+- **[Architecture Justification](docs/architecture_docs/Architecture_Justification.md)** - Architecture decisions
+
+### Requirements
+- **[Requirements (English)](Requirement_EN.md)** - Project requirements
+
+## Demo and Testing
+
+**Live Server**: http://34.124.227.173:5000
+
+**Test Pages**:
+- Homepage: http://34.124.227.173:5000/
+- Chat Demo: http://34.124.227.173:5000/chat-demo.html
+- Upload Test: http://34.124.227.173:5000/chat-upload-test.html
 

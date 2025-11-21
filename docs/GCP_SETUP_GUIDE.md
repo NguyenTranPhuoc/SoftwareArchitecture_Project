@@ -1,276 +1,549 @@
-# Google Cloud Platform Setup - Simple Guide for University Project
+# Google Cloud Platform Setup Guide# Google Cloud Platform Setup - Simple Guide for University Project
 
-**Your Role**: Google Cloud Administrator  
+
+
+## Overview**Your Role**: Google Cloud Administrator  
+
 **Goal**: Setup basic GCP infrastructure for the team  
-**Time**: ~10-15 hours total  
-**Budget**: FREE (using GCP free tier)
 
----
+**Role**: Google Cloud Administrator  **Time**: ~10-15 hours total  
 
-## 🎯 Your 3 Main Tasks
+**Goal**: Setup GCP infrastructure for backend deployment  **Budget**: FREE (using GCP free tier)
 
-1. **Setup GCP Account & Project** (2 hours)
+**Time**: 10-15 hours  
+
+**Budget**: FREE (using GCP free tier)---
+
+
+
+---## 🎯 Your 3 Main Tasks
+
+
+
+## Main Tasks1. **Setup GCP Account & Project** (2 hours)
+
 2. **Deploy Backend Server** (4-5 hours)
-3. **Setup File Storage** (2-3 hours)
 
-**That's it!** Keep it simple for university.
+1. Setup GCP Account and Project (2 hours)3. **Setup File Storage** (2-3 hours)
 
----
+2. Deploy Backend Server (4-5 hours)
 
-## 📅 Week 1: Setup & Configuration
+3. Setup File Storage (2-3 hours)**That's it!** Keep it simple for university.
 
-### Task 1: Create GCP Account (Day 1 - 1 hour)
 
-#### Step 1: Sign Up
-```
-1. Go to: https://console.cloud.google.com
-2. Sign in with your Gmail account
-3. Click "Try for Free"
-4. Enter credit card (won't be charged if you stay in free tier)
+
+------
+
+
+
+## Week 1: Setup and Configuration## 📅 Week 1: Setup & Configuration
+
+
+
+### Task 1: Create GCP Account### Task 1: Create GCP Account (Day 1 - 1 hour)
+
+
+
+#### Step 1: Sign Up#### Step 1: Sign Up
+
+1. Go to: https://console.cloud.google.com```
+
+2. Sign in with your Gmail account1. Go to: https://console.cloud.google.com
+
+3. Click "Try for Free"2. Sign in with your Gmail account
+
+4. Enter credit card (won't be charged in free tier)3. Click "Try for Free"
+
+5. Get $300 free credit (valid 90 days)4. Enter credit card (won't be charged if you stay in free tier)
+
 5. Get $300 free credit (valid 90 days)
-```
 
-#### Step 2: Create Project
-```
+#### Step 2: Create Project```
+
 1. In GCP Console, click project dropdown (top bar)
-2. Click "New Project"
-3. Project name: "zola-clone"
-4. Organization: (leave as-is)
-5. Click "Create"
-```
 
-#### Step 3: Enable Required APIs
+2. Click "New Project"#### Step 2: Create Project
+
+3. Project name: "zola-clone"```
+
+4. Organization: (leave as-is)1. In GCP Console, click project dropdown (top bar)
+
+5. Click "Create"2. Click "New Project"
+
+3. Project name: "zola-clone"
+
+#### Step 3: Enable Required APIs4. Organization: (leave as-is)
+
+Go to: APIs & Services → Library5. Click "Create"
+
 ```
-Go to: APIs & Services → Library
 
 Search and enable:
-✅ Compute Engine API
+
+- Compute Engine API#### Step 3: Enable Required APIs
+
+- Cloud Storage API```
+
+Go to: APIs & Services → Library
+
+---
+
+Search and enable:
+
+### Task 2: Create Service Account✅ Compute Engine API
+
 ✅ Cloud Storage API
 
+Your backend needs credentials to access GCP services.
+
 That's all you need!
-```
 
----
+#### Steps:```
 
-### Task 2: Create Service Account (Day 1 - 30 min)
-
-#### Why?
-Your backend needs credentials to access GCP services (like file storage).
-
-#### Steps:
-```
 1. Go to: IAM & Admin → Service Accounts
-2. Click "Create Service Account"
+
+2. Click "Create Service Account"---
+
 3. Name: "zola-backend"
-4. Description: "Backend application service account"
+
+4. Description: "Backend application service account"### Task 2: Create Service Account (Day 1 - 30 min)
+
 5. Click "Create and Continue"
-6. Grant role: "Storage Admin"
-7. Click "Continue" → "Done"
+
+6. Grant role: "Storage Admin"#### Why?
+
+7. Click "Continue" → "Done"Your backend needs credentials to access GCP services (like file storage).
+
 8. Click on the service account you just created
+
+9. Go to "Keys" tab#### Steps:
+
+10. Click "Add Key" → "Create New Key"```
+
+11. Choose "JSON"1. Go to: IAM & Admin → Service Accounts
+
+12. Save file as: "gcp-credentials.json"2. Click "Create Service Account"
+
+13. Keep it SAFE and SECRET3. Name: "zola-backend"
+
+4. Description: "Backend application service account"
+
+#### Save the file:5. Click "Create and Continue"
+
+Put it in: `config/gcp-credentials.json`6. Grant role: "Storage Admin"
+
+7. Click "Continue" → "Done"
+
+IMPORTANT: Add to .gitignore so it's not pushed to GitHub8. Click on the service account you just created
+
 9. Go to "Keys" tab
-10. Click "Add Key" → "Create New Key"
+
+---10. Click "Add Key" → "Create New Key"
+
 11. Choose "JSON"
-12. Save file as: "gcp-credentials.json"
+
+### Task 3: Install Google Cloud SDK12. Save file as: "gcp-credentials.json"
+
 13. Keep it SAFE and SECRET!
-```
 
-#### Save the file:
-```
-Put it in: F:\14_CaoHoc\Ky2\Kiến trúc phần mềm\Zola2\zola-clone\config\gcp-credentials.json
+#### Download and Install:```
 
-⚠️ IMPORTANT: Add to .gitignore so it's not pushed to GitHub!
-```
+1. Go to: https://cloud.google.com/sdk/docs/install-sdk#windows
 
----
+2. Download Windows installer#### Save the file:
+
+3. Run installer (keep default settings)```
+
+4. Open PowerShell and run:Put it in: F:\14_CaoHoc\Ky2\Kiến trúc phần mềm\Zola2\zola-clone\config\gcp-credentials.json
+
+
+
+```bash⚠️ IMPORTANT: Add to .gitignore so it's not pushed to GitHub!
+
+gcloud init```
+
+gcloud auth login
+
+gcloud config set project zola-clone---
+
+```
 
 ### Task 3: Install Google Cloud SDK (Day 1 - 30 min)
 
-#### Download & Install:
-```
-1. Go to: https://cloud.google.com/sdk/docs/install-sdk#windows
-2. Download Windows installer
-3. Run installer (keep default settings)
-4. Open PowerShell and run:
-
-gcloud init
-gcloud auth login
-gcloud config set project zola-clone
-```
-
-✅ **Week 1 Done!** You now have GCP account, project, and credentials.
-
 ---
 
-## 📅 Week 2: Deployment
+#### Download & Install:
 
-### Task 4: Create Storage Bucket (Day 8 - 2 hours)
+## Week 2: Deployment```
 
-#### Why?
-Store user profile pictures and chat images.
+1. Go to: https://cloud.google.com/sdk/docs/install-sdk#windows
 
-#### Steps via Console (Easy):
-```
+### Task 4: Create Storage Bucket2. Download Windows installer
+
+3. Run installer (keep default settings)
+
+#### Steps via Console:4. Open PowerShell and run:
+
 1. Go to: Cloud Storage → Buckets
-2. Click "Create Bucket"
-3. Name: "zola-uploads-[your-student-id]" (must be globally unique)
-4. Location type: "Region"
-5. Location: "asia-southeast1" (Singapore)
+
+2. Click "Create Bucket"gcloud init
+
+3. Name: "zola-uploads-[your-student-id]" (must be globally unique)gcloud auth login
+
+4. Location type: "Region"gcloud config set project zola-clone
+
+5. Location: "asia-southeast1" (Singapore)```
+
 6. Storage class: "Standard"
-7. Access control: "Fine-grained"
+
+7. Access control: "Fine-grained"✅ **Week 1 Done!** You now have GCP account, project, and credentials.
+
 8. Click "Create"
-```
+
+---
 
 #### Make it Public:
-```
-1. Click on your bucket
+
+1. Click on your bucket## 📅 Week 2: Deployment
+
 2. Go to "Permissions" tab
-3. Click "Grant Access"
+
+3. Click "Grant Access"### Task 4: Create Storage Bucket (Day 8 - 2 hours)
+
 4. New principals: "allUsers"
-5. Role: "Storage Object Viewer"
-6. Click "Save"
-```
 
-#### Test Upload:
-```powershell
-# In PowerShell
-gsutil cp test.txt gs://zola-uploads-[your-student-id]/
-```
+5. Role: "Storage Object Viewer"#### Why?
 
----
+6. Click "Save"Store user profile pictures and chat images.
 
-### Task 5: Deploy Backend Server (Day 9-10 - 4 hours)
 
-#### Create Virtual Machine:
-```
-1. Go to: Compute Engine → VM Instances
+
+#### Test Upload:#### Steps via Console (Easy):
+
+```bash```
+
+gsutil cp test.txt gs://zola-uploads-[your-student-id]/1. Go to: Cloud Storage → Buckets
+
+```2. Click "Create Bucket"
+
+3. Name: "zola-uploads-[your-student-id]" (must be globally unique)
+
+---4. Location type: "Region"
+
+5. Location: "asia-southeast1" (Singapore)
+
+### Task 5: Deploy Backend Server6. Storage class: "Standard"
+
+7. Access control: "Fine-grained"
+
+#### Create Virtual Machine:8. Click "Create"
+
+1. Go to: Compute Engine → VM Instances```
+
 2. Click "Create Instance"
-3. Configure:
-   - Name: "zola-server"
-   - Region: "asia-southeast1"
-   - Zone: "asia-southeast1-a"
-   - Machine type: "e2-micro" (FREE TIER ✅)
-   - Boot disk: "Ubuntu 22.04 LTS", 10GB
-   - Firewall: ✅ Allow HTTP, ✅ Allow HTTPS
-4. Click "Create"
-5. Wait 2-3 minutes for VM to start
-```
 
-#### Setup Server:
-```bash
-# Click "SSH" button to connect to your VM
+3. Configure:#### Make it Public:
 
-# 1. Install Node.js
+   - Name: "zola-server"```
+
+   - Region: "asia-southeast1"1. Click on your bucket
+
+   - Zone: "asia-southeast1-a"2. Go to "Permissions" tab
+
+   - Machine type: "e2-micro" (FREE TIER)3. Click "Grant Access"
+
+   - Boot disk: "Ubuntu 22.04 LTS", 10GB4. New principals: "allUsers"
+
+   - Firewall: Allow HTTP, Allow HTTPS5. Role: "Storage Object Viewer"
+
+4. Click "Create"6. Click "Save"
+
+5. Wait 2-3 minutes for VM to start```
+
+
+
+#### Setup Server:#### Test Upload:
+
+```bash```powershell
+
+# Click "SSH" button to connect to your VM# In PowerShell
+
+gsutil cp test.txt gs://zola-uploads-[your-student-id]/
+
+# Install Node.js```
+
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs git
 
-# 2. Install PM2 (keeps your app running)
+sudo apt-get install -y nodejs git---
+
+
+
+# Install PM2### Task 5: Deploy Backend Server (Day 9-10 - 4 hours)
+
 sudo npm install -g pm2
 
-# 3. Setup GitHub Authentication (IMPORTANT!)
-# Option A: Create Personal Access Token (Recommended for private repos)
-# Go to: https://github.com/settings/tokens/new
-# - Note: "GCP VM Access"
-# - Expiration: 90 days
-# - Select scope: ✅ repo (full control of private repositories)
-# - Click "Generate token"
-# - COPY THE TOKEN IMMEDIATELY!
-#
-# Then clone with token:
-git clone https://YOUR_USERNAME:YOUR_TOKEN@github.com/NguyenTranPhuoc/SoftwareArchitecture_Project.git
+#### Create Virtual Machine:
 
-# Option B: Make repo public temporarily (easier but less secure)
-# Go to: https://github.com/NguyenTranPhuoc/SoftwareArchitecture_Project/settings
-# Scroll to "Danger Zone" → "Change visibility" → "Make public"
-# Then clone normally:
-# git clone https://github.com/NguyenTranPhuoc/SoftwareArchitecture_Project.git
+# Clone repository```
 
-# Navigate to project
-cd SoftwareArchitecture_Project/zola-clone
+git clone https://github.com/NguyenTranPhuoc/SoftwareArchitecture_Project.git1. Go to: Compute Engine → VM Instances
 
-# 4. Install dependencies
-npm install
+2. Click "Create Instance"
 
-# 5. Install TypeScript type definitions (IMPORTANT!)
-npm install --save-dev @types/pg
+# Navigate to project3. Configure:
 
-# 6. Create .env file
-# Note: nano might not be installed, use vi instead
-vi .env
-# Press 'i' to enter insert mode
-# Paste your .env contents (right-click in SSH terminal)
+cd SoftwareArchitecture_Project   - Name: "zola-server"
+
+   - Region: "asia-southeast1"
+
+# Install dependencies   - Zone: "asia-southeast1-a"
+
+npm install   - Machine type: "e2-micro" (FREE TIER ✅)
+
+   - Boot disk: "Ubuntu 22.04 LTS", 10GB
+
+# Create .env file   - Firewall: ✅ Allow HTTP, ✅ Allow HTTPS
+
+vi .env4. Click "Create"
+
+# Press 'i' to enter insert mode5. Wait 2-3 minutes for VM to start
+
+# Paste your .env contents```
+
 # Press 'Esc', then type ':wq' and press Enter to save
 
-# ⚠️ IMPORTANT: Your .env must have these values for PRODUCTION:
-# NODE_ENV=production
-# DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/zola_db"
-# MONGODB_URI=mongodb://localhost:27017/zola_chat
-# GCS_PROJECT_ID=zola-478416
-# GCS_BUCKET_NAME=zola-uploads-[your-id]
-# GCS_KEY_FILE=./config/gcp-credentials.json
+#### Setup Server:
 
-# 7. Build the project
-npm run build:server
+# Build the project```bash
 
-# 8. Start the server
-pm2 start dist/server.js --name zola-backend
-pm2 save
+npm run build:server# Click "SSH" button to connect to your VM
+
+
+
+# Start the server# 1. Install Node.js
+
+pm2 start dist/server.js --name zola-backendcurl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+
+pm2 savesudo apt-get install -y nodejs git
+
 pm2 startup
-# ⚠️ PM2 will show a command to run - COPY AND RUN IT!
-# It looks like: sudo env PATH=... pm2 startup systemd -u YOUR_USER --hp /home/YOUR_USER
-# This enables auto-start on reboot
-```
 
-#### Open Firewall Port:
-```bash
-# Still in SSH terminal
-sudo ufw allow 5000
-sudo ufw enable
-```
+# Run the command that PM2 shows# 2. Install PM2 (keeps your app running)
 
-#### Configure External Access:
-```
-1. In GCP Console, go to: VPC Network → Firewall
-2. Click "Create Firewall Rule"
-3. Name: "allow-backend-5000"
-4. Direction: "Ingress"
+```sudo npm install -g pm2
+
+
+
+#### Open Firewall Port:# 3. Setup GitHub Authentication (IMPORTANT!)
+
+```bash# Option A: Create Personal Access Token (Recommended for private repos)
+
+sudo ufw allow 5000# Go to: https://github.com/settings/tokens/new
+
+sudo ufw enable# - Note: "GCP VM Access"
+
+```# - Expiration: 90 days
+
+# - Select scope: ✅ repo (full control of private repositories)
+
+#### Configure External Access:# - Click "Generate token"
+
+1. In GCP Console, go to: VPC Network → Firewall# - COPY THE TOKEN IMMEDIATELY!
+
+2. Click "Create Firewall Rule"#
+
+3. Name: "allow-backend-5000"# Then clone with token:
+
+4. Direction: "Ingress"git clone https://YOUR_USERNAME:YOUR_TOKEN@github.com/NguyenTranPhuoc/SoftwareArchitecture_Project.git
+
 5. Targets: "All instances in the network"
-6. Source IPv4 ranges: "0.0.0.0/0"
-7. Protocols and ports: "tcp:5000"
-8. Click "Create"
-```
 
-#### Get Your Server URL:
-```
+6. Source IPv4 ranges: "0.0.0.0/0"# Option B: Make repo public temporarily (easier but less secure)
+
+7. Protocols and ports: "tcp:5000"# Go to: https://github.com/NguyenTranPhuoc/SoftwareArchitecture_Project/settings
+
+8. Click "Create"# Scroll to "Danger Zone" → "Change visibility" → "Make public"
+
+# Then clone normally:
+
+#### Get Your Server URL:# git clone https://github.com/NguyenTranPhuoc/SoftwareArchitecture_Project.git
+
 1. Go to: Compute Engine → VM Instances
-2. Find your "zola-server"
-3. Copy "External IP" (e.g., 34.87.123.45)
-4. Your API: http://34.87.123.45:5000
-5. Test: http://34.87.123.45:5000/health
-```
 
-✅ **Share this URL with your team!**
+2. Find your "zola-server"# Navigate to project
+
+3. Copy "External IP" (e.g., 34.124.227.173)cd SoftwareArchitecture_Project/zola-clone
+
+4. Your API: http://34.124.227.173:5000
+
+5. Test: http://34.124.227.173:5000/health# 4. Install dependencies
+
+npm install
 
 ---
+
+# 5. Install TypeScript type definitions (IMPORTANT!)
+
+## Common Commandsnpm install --save-dev @types/pg
+
+
+
+### Check Server Status:# 6. Create .env file
+
+```bash# Note: nano might not be installed, use vi instead
+
+pm2 statusvi .env
+
+pm2 logs zola-backend# Press 'i' to enter insert mode
+
+pm2 logs zola-backend --lines 50# Paste your .env contents (right-click in SSH terminal)
+
+```# Press 'Esc', then type ':wq' and press Enter to save
+
+
+
+### Restart Server:# ⚠️ IMPORTANT: Your .env must have these values for PRODUCTION:
+
+```bash# NODE_ENV=production
+
+pm2 restart zola-backend# DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/zola_db"
+
+pm2 reload zola-backend# MONGODB_URI=mongodb://localhost:27017/zola_chat
+
+```# GCS_PROJECT_ID=zola-478416
+
+# GCS_BUCKET_NAME=zola-uploads-[your-id]
+
+### Update Code from GitHub:# GCS_KEY_FILE=./config/gcp-credentials.json
+
+```bash
+
+cd ~/SoftwareArchitecture_Project# 7. Build the project
+
+git pull origin mainnpm run build:server
+
+npm install
+
+npm run build:server# 8. Start the server
+
+pm2 restart zola-backendpm2 start dist/server.js --name zola-backend
+
+pm2 logs zola-backendpm2 save
+
+```pm2 startup
+
+# ⚠️ PM2 will show a command to run - COPY AND RUN IT!
+
+### Check Firewall:# It looks like: sudo env PATH=... pm2 startup systemd -u YOUR_USER --hp /home/YOUR_USER
+
+```bash# This enables auto-start on reboot
+
+sudo ufw status```
+
+sudo ufw allow 5000
+
+```#### Open Firewall Port:
+
+```bash
+
+---# Still in SSH terminal
+
+sudo ufw allow 5000
+
+## Cost Managementsudo ufw enable
+
+```
+
+### Stay in Free Tier:
+
+- Use e2-micro VM (744 hours/month free)#### Configure External Access:
+
+- Store less than 5GB in Cloud Storage (free)```
+
+- Stop VM when not using (nights/weekends)1. In GCP Console, go to: VPC Network → Firewall
+
+2. Click "Create Firewall Rule"
+
+### Stop VM:3. Name: "allow-backend-5000"
+
+GCP Console → Compute Engine → VM Instances4. Direction: "Ingress"
+
+Click three dots → Stop5. Targets: "All instances in the network"
+
+6. Source IPv4 ranges: "0.0.0.0/0"
+
+### Start VM:7. Protocols and ports: "tcp:5000"
+
+Click three dots → Start8. Click "Create"
+
+(External IP will change - update your team)```
+
+
+
+### Monitor Costs:#### Get Your Server URL:
+
+Go to: Billing → Reports```
+
+Set alert: $5 (email notification)1. Go to: Compute Engine → VM Instances
+
+2. Find your "zola-server"
+
+---3. Copy "External IP" (e.g., 34.87.123.45)
+
+4. Your API: http://34.87.123.45:5000
+
+## Troubleshooting5. Test: http://34.87.123.45:5000/health
+
+```
+
+### Cannot access API?
+
+1. Check VM is running✅ **Share this URL with your team!**
+
+2. Check firewall rule exists (allow-backend-5000)
+
+3. Check PM2: `pm2 status`---
+
+4. Check logs: `pm2 logs zola-backend`
 
 ### Task 6: Update Backend for GCP Storage (Day 11 - 2 hours)
 
-#### Install Required Package:
-```bash
-# On your LOCAL machine (not the VM)
-cd "F:\14_CaoHoc\Ky2\Kiến trúc phần mềm\Zola2\zola-clone"
-npm install @google-cloud/storage
-```
+### Upload fails?
 
-#### Create Upload Service:
-Create file: `src/server/services/uploadService.ts`
+1. Check gcp-credentials.json exists on VM#### Install Required Package:
+
+2. Check bucket name is correct```bash
+
+3. Check bucket is public# On your LOCAL machine (not the VM)
+
+4. Check file size < 5MBcd "F:\14_CaoHoc\Ky2\Kiến trúc phần mềm\Zola2\zola-clone"
+
+npm install @google-cloud/storage
+
+### VM costs money?```
+
+1. Stop VM when not using
+
+2. Use e2-micro (free tier)#### Create Upload Service:
+
+3. Delete unused resourcesCreate file: `src/server/services/uploadService.ts`
+
+4. Check Billing alerts
 
 ```typescript
-import { Storage } from '@google-cloud/storage';
+
+---import { Storage } from '@google-cloud/storage';
+
 import path from 'path';
 
+## Resources
+
 // Initialize Google Cloud Storage
-const storage = new Storage({
-  projectId: 'zola-clone',
+
+- GCP Documentation: https://cloud.google.com/docsconst storage = new Storage({
+
+- GCP Free Tier: https://cloud.google.com/free  projectId: 'zola-clone',
+
   keyFilename: path.join(__dirname, '../../config/gcp-credentials.json')
 });
 
