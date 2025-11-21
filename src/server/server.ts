@@ -32,7 +32,7 @@ const io = new SocketIOServer(httpServer, {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+  origin: process.env.CORS_ORIGIN?.split(',') || '*', // Allow all origins for testing
   credentials: true,
 }));
 app.use(express.json());
