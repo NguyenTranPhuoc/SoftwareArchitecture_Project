@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zola Clone - Test Pages</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 50px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 32px;
+            text-align: center;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .link-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: block;
+        }
+        .link-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .link-card h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        .link-card p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .info h3 {
+            color: #004085;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .info p {
+            color: #004085;
+            font-size: 13px;
+            margin: 5px 0;
+        }
+        .info code {
+            background: rgba(0,0,0,0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Zola Clone API</h1>
+        <p class="subtitle">GCP File Storage Demo - Test Pages</p>
+
+        <div class="links">
+            <a href="/chat-demo.html" class="link-card">
+                <h2>Chat Demo</h2>
+                <p>Complete chat interface with image upload and display (Zalo-style)</p>
+            </a>
+
+            <a href="/chat-upload-test.html" class="link-card">
+                <h2>Upload Test</h2>
+                <p>Test single/multiple image and video uploads to GCS</p>
+            </a>
+
+            <a href="/api" class="link-card">
+                <h2>API Documentation</h2>
+                <p>View all available API endpoints</p>
+            </a>
+
+            <a href="/health" class="link-card">
+                <h2>Health Check</h2>
+                <p>Check if server is running</p>
+            </a>
+        </div>
+
+        <div class="info">
+            <h3>Server Information</h3>
+            <p><strong>API Endpoints:</strong></p>
+            <p><code>GET /api</code> - API documentation</p>
+            <p><code>GET /health</code> - Health check</p>
+            <p><code>POST /api/chat/image</code> - Upload single image</p>
+            <p><code>POST /api/chat/images</code> - Upload multiple images</p>
+            <p><code>POST /api/chat/video</code> - Upload video</p>
+            <p><code>GET /api/chat/info</code> - Chat upload API info</p>
+        </div>
+    </div>
+</body>
+</html>
