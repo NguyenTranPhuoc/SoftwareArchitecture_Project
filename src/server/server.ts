@@ -87,11 +87,11 @@ app.use('/api/chat', chatRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('✓ User connected:', socket.id);
+  console.log('User connected:', socket.id);
 
   // TODO: Implement socket event handlers
   socket.on('disconnect', () => {
-    console.log('✗ User disconnected:', socket.id);
+    console.log('User disconnected:', socket.id);
   });
 });
 
@@ -116,38 +116,38 @@ app.use((err: Error, req: Request, res: Response, next: any) => {
 // Initialize databases and start server
 const startServer = async () => {
   try {
-    console.log('🚀 Starting Zalo Clone Server...\n');
+    console.log('Starting Zalo Clone Server...\n');
 
     // Test database connections
     await testDatabaseConnections();
 
     // Start server
     httpServer.listen(PORT, () => {
-      console.log(`\n✓ Server is running on port ${PORT}`);
-      console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`✓ Health check: http://localhost:${PORT}/health`);
-      console.log(`✓ API endpoint: http://localhost:${PORT}/api\n`);
+      console.log(`\nServer is running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`Health check: http://localhost:${PORT}/health`);
+      console.log(`API endpoint: http://localhost:${PORT}/api\n`);
     });
   } catch (error) {
-    console.error('✗ Failed to start server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
 };
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('\n⚠ SIGTERM signal received: closing HTTP server');
+  console.log('\nSIGTERM signal received: closing HTTP server');
   httpServer.close(async () => {
-    console.log('✓ HTTP server closed');
+    console.log('HTTP server closed');
     await closeDatabaseConnections();
     process.exit(0);
   });
 });
 
 process.on('SIGINT', async () => {
-  console.log('\n⚠ SIGINT signal received: closing HTTP server');
+  console.log('\nSIGINT signal received: closing HTTP server');
   httpServer.close(async () => {
-    console.log('✓ HTTP server closed');
+    console.log('HTTP server closed');
     await closeDatabaseConnections();
     process.exit(0);
   });

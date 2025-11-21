@@ -159,7 +159,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📸 Zalo Chat Upload Test</h1>
+        <h1>Zalo Chat Upload Test</h1>
         <p class="subtitle">Test GCP file upload for chat messages</p>
 
         <div class="info">
@@ -170,7 +170,7 @@
 
         <!-- Single Image Upload -->
         <div class="upload-section">
-            <h2>📷 Single Image Upload</h2>
+            <h2>Single Image Upload</h2>
             <input type="file" id="singleImage" accept="image/*">
             <button onclick="uploadSingleImage()">Upload Image</button>
             <div class="loading" id="loading1">
@@ -182,7 +182,7 @@
 
         <!-- Multiple Images Upload -->
         <div class="upload-section">
-            <h2>🖼️ Multiple Images Upload</h2>
+            <h2>Multiple Images Upload</h2>
             <input type="file" id="multipleImages" accept="image/*" multiple>
             <button onclick="uploadMultipleImages()">Upload Images (Max 10)</button>
             <div class="loading" id="loading2">
@@ -194,7 +194,7 @@
 
         <!-- Video Upload -->
         <div class="upload-section">
-            <h2>🎥 Video Upload</h2>
+            <h2>Video Upload</h2>
             <input type="file" id="video" accept="video/*">
             <button onclick="uploadVideo()">Upload Video</button>
             <div class="loading" id="loading3">
@@ -221,7 +221,7 @@
             result.className = `result ${success ? 'success' : 'error'}`;
             result.style.display = 'block';
             
-            let html = `<h3>${success ? '✅ Success!' : '❌ Error'}</h3>`;
+            let html = `<h3>${success ? 'Success!' : 'Error'}</h3>`;
             html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
             
             if (success && data.imageUrl) {

@@ -42,17 +42,17 @@ coverage/
 *.tmp
 .cache/
 
-# Exclude all .md files except README.md and Architecture_Justification.md
-*.md
-!README.md
-!docs/architecture_docs/Architecture_Justification.md
+# Exclude some .md files
+# *.md
+# !README.md
 
+# Ignore placeholder directories without proper structure
 # Temporary/placeholder files without extensions
 diagrams/architecture
 diagrams/database
 diagrams/workflow
 
-# Ignore all files without extensions (placeholder/temporary files)
+# Ignore some placeholder files without extensions
 .github/ISSUE_TEMPLATE
 .github/workflows
 docs/api
@@ -67,13 +67,8 @@ src/client/pages
 src/client/types
 src/client/utils
 src/server/controllers
-src/server/middleware
 src/server/models
-src/server/routes
-src/server/services
 src/server/types
-src/server/utils
-src/shared/types
 tests/client
 tests/integration
 tests/server

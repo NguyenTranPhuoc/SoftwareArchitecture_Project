@@ -26,7 +26,7 @@ router.post('/image', upload.single('image'), async (req, res) => {
       });
     }
     
-    console.log('📸 Uploading chat image:', req.file.originalname);
+    console.log('Uploading chat image:', req.file.originalname);
     const url = await uploadFile(req.file, 'chat-images');
     
     // Return image URL that can be sent in chat message
@@ -64,7 +64,7 @@ router.post('/images', upload.array('images', 10), async (req, res) => {
       });
     }
     
-    console.log(`📸 Uploading ${files.length} chat images`);
+    console.log(`Uploading ${files.length} chat images`);
     
     // Upload all images in parallel
     const uploadPromises = files.map(file => uploadFile(file, 'chat-images'));
@@ -101,7 +101,7 @@ router.post('/video', upload.single('video'), async (req, res) => {
       });
     }
     
-    console.log('🎥 Uploading chat video:', req.file.originalname);
+    console.log('Uploading chat video:', req.file.originalname);
     const url = await uploadFile(req.file, 'chat-images'); // Using same folder for simplicity
     
     res.json({ 

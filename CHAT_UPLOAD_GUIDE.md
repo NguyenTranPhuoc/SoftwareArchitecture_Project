@@ -301,12 +301,12 @@ All chat media files are stored in:
 
 ## Security Notes
 
-⚠️ **Current Implementation (Demo/Testing):**
+**Current Implementation (Demo/Testing):**
 - No authentication required
 - All files are public
 - No user ownership tracking
 
-✅ **Production Recommendations:**
+**Production Recommendations:**
 - Add JWT authentication to upload endpoints
 - Associate uploads with user IDs
 - Implement file scanning for malware
