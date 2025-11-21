@@ -9,6 +9,7 @@ import {
   connectMongoDB,
   connectRedis,
 } from './utils/database';
+import uploadRoutes from './routes/upload';
 
 // Load environment variables
 dotenv.config();
@@ -56,17 +57,21 @@ app.get('/health', (req: Request, res: Response) => {
 app.get('/api', (req: Request, res: Response) => {
   res.json({
     success: true,
-    message: 'Zalo Clone API v1.0',
+    message: 'Zola Clone API v1.0 - GCP File Storage Demo',
     endpoints: {
       health: '/health',
-      auth: '/api/auth/*',
-      users: '/api/users/*',
-      friends: '/api/friends/*',
-      conversations: '/api/conversations/*',
-      messages: '/api/messages/*',
+      upload: '/api/upload/* - GCP file upload endpoints',
+      auth: '/api/auth/* (coming soon)',
+      users: '/api/users/* (coming soon)',
+      friends: '/api/friends/* (coming soon)',
+      conversations: '/api/conversations/* (coming soon)',
+      messages: '/api/messages/* (coming soon)',
     },
   });
 });
+
+// GCP Upload routes
+app.use('/api/upload', uploadRoutes);
 
 // TODO: Import and use route handlers
 // import authRoutes from './routes/auth';
