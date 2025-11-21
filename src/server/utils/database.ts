@@ -86,39 +86,41 @@ export const getRedisClient = (): RedisClientType => {
 
 // Test database connections
 export const testDatabaseConnections = async (): Promise<void> => {
+  console.log('🔍 Testing database connections...\n');
+  
+  // Test PostgreSQL (optional - for auth/users, handled by backend team)
   try {
-    // Test PostgreSQL
     const pgResult = await pgPool.query('SELECT NOW()');
     console.log('✓ PostgreSQL connection test passed:', pgResult.rows[0].now);
-
-    // Test MongoDB (optional for initial development)
-    try {
-      const mongodb = await connectMongoDB();
-      await mongodb.command({ ping: 1 });
-      console.log('✓ MongoDB connection test passed');
-    } catch (mongoError) {
-      console.warn('⚠ MongoDB connection failed - chat features will not work:', (mongoError as Error).message);
-      console.warn('⚠ Please install MongoDB to enable chat functionality');
-    }
-
-    // Test Redis (optional - skip if not configured)
-    try {
-      if (process.env.REDIS_HOST && process.env.REDIS_HOST !== '') {
-        const redis = await connectRedis();
-        await redis.ping();
-        console.log('✓ Redis connection test passed');
-      } else {
-        console.log('⚠ Redis not configured - skipping (optional)');
-      }
-    } catch (redisError) {
-      console.warn('⚠ Redis connection failed - continuing without Redis:', (redisError as Error).message);
-    }
-
-    console.log('\n✓ PostgreSQL is connected - server can start!\n');
-  } catch (error) {
-    console.error('\n✗ Database connection test failed:', error);
-    throw error;
+  } catch (pgError) {
+    console.warn('⚠ PostgreSQL connection failed - auth features will not work:', (pgError as Error).message);
+    console.warn('⚠ PostgreSQL is managed by backend team - continuing without it for GCP demo\n');
   }
+
+  // Test MongoDB (optional for initial development)
+  try {
+    const mongodb = await connectMongoDB();
+    await mongodb.command({ ping: 1 });
+    console.log('✓ MongoDB connection test passed');
+  } catch (mongoError) {
+    console.warn('⚠ MongoDB connection failed - chat features will not work:', (mongoError as Error).message);
+    console.warn('⚠ Please install MongoDB to enable chat functionality\n');
+  }
+
+  // Test Redis (optional - skip if not configured)
+  try {
+    if (process.env.REDIS_HOST && process.env.REDIS_HOST !== '') {
+      const redis = await connectRedis();
+      await redis.ping();
+      console.log('✓ Redis connection test passed');
+    } else {
+      console.log('⚠ Redis not configured - skipping (optional)');
+    }
+  } catch (redisError) {
+    console.warn('⚠ Redis connection failed - continuing without Redis:', (redisError as Error).message);
+  }
+
+  console.log('\n✓ Server starting - databases are optional for GCP file storage demo!\n');
 };
 
 // Graceful shutdown
