@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zalo Chat Demo - Image Upload</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .chat-container {
+            width: 500px;
+            height: 700px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-end;
+        }
+        .message.sent {
+            justify-content: flex-end;
+        }
+        .message.received {
+            justify-content: flex-start;
+        }
+        .message-content {
+            max-width: 70%;
+            position: relative;
+        }
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+        .message.sent .message-bubble {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.received .message-bubble {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .message-image {
+            max-width: 100%;
+            border-radius: 12px;
+            cursor: pointer;
+            display: block;
+            margin-top: 5px;
+        }
+        .message.sent .message-image {
+            border-bottom-right-radius: 4px;
+        }
+        .message.received .message-image {
+            border-bottom-left-radius: 4px;
+        }
+        .message-text {
+            margin-bottom: 5px;
+        }
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        .message.sent .message-time {
+            text-align: right;
+            color: white;
+        }
+        .message.received .message-time {
+            text-align: left;
+            color: #666;
+        }
+        .chat-input-container {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+        }
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: background 0.2s;
+        }
+        .btn-icon:hover {
+            background: #5568d3;
+        }
+        .btn-icon:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .file-input {
+            display: none;
+        }
+        .uploading-indicator {
+            display: none;
+            padding: 10px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            margin: 10px;
+            text-align: center;
+            font-size: 13px;
+            color: #856404;
+        }
+        .uploading-indicator.active {
+            display: block;
+        }
+        .image-preview {
+            position: relative;
+            display: inline-block;
+            margin: 10px;
+        }
+        .image-preview img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+        .image-preview .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .lightbox.active {
+            display: flex;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+        .lightbox .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 40px;
+            color: white;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            Chat Demo - Image Upload
+        </div>
+        
+        <div class="uploading-indicator" id="uploadingIndicator">
+            Uploading image...
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will appear here -->
+        </div>
+        
+        <div class="chat-input-container">
+            <input type="file" id="fileInput" class="file-input" accept="image/*">
+            <button class="btn-icon" onclick="document.getElementById('fileInput').click()" title="Attach image">
+                +
+            </button>
+            <input type="text" id="messageInput" class="chat-input" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
+            <button class="btn-icon" onclick="sendMessage()" id="sendBtn">
+                &rarr;
+            </button>
+        </div>
+    </div>
+
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <button class="close-btn" onclick="closeLightbox()">&times;</button>
+        <img id="lightboxImage" src="" alt="Full size image">
+    </div>
+
+    <script>
+        const API_BASE = 'http://34.124.227.173:5000/api/chat';
+        let selectedImageUrl = null;
+
+        // Handle file selection
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                await uploadImage(file);
+                e.target.value = ''; // Reset file input
+            }
+        });
+
+        // Upload image to server
+        async function uploadImage(file) {
+            const formData = new FormData();
+            formData.append('image', file);
+
+            const uploadingIndicator = document.getElementById('uploadingIndicator');
+            uploadingIndicator.classList.add('active');
+
+            try {
+                const response = await fetch(`${API_BASE}/image`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                uploadingIndicator.classList.remove('active');
+
+                if (data.success) {
+                    // Store the uploaded image URL
+                    selectedImageUrl = data.imageUrl;
+                    
+                    // Send image message immediately
+                    sendImageMessage(data.imageUrl);
+                } else {
+                    alert('Upload failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                uploadingIndicator.classList.remove('active');
+                alert('Upload failed: ' + error.message);
+            }
+        }
+
+        // Send text message
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            addMessage('sent', text, null);
+            input.value = '';
+
+            // Simulate received message (in real app, this comes from Socket.IO)
+            setTimeout(() => {
+                addMessage('received', 'Message received!', null);
+            }, 1000);
+        }
+
+        // Send image message
+        function sendImageMessage(imageUrl, caption = '') {
+            addMessage('sent', caption, imageUrl);
+            selectedImageUrl = null;
+
+            // Simulate received message
+            setTimeout(() => {
+                addMessage('received', 'Nice photo!', null);
+            }, 1000);
+        }
+
+        // Add message to chat
+        function addMessage(type, text, imageUrl) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+
+            const now = new Date();
+            const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                             now.getMinutes().toString().padStart(2, '0');
+
+            let messageHTML = '<div class="message-content">';
+            
+            if (text) {
+                messageHTML += `<div class="message-bubble"><div class="message-text">${escapeHtml(text)}</div>`;
+            }
+            
+            if (imageUrl) {
+                if (!text) {
+                    messageHTML += '<div class="message-bubble">';
+                }
+                messageHTML += `<img src="${imageUrl}" class="message-image" onclick="openLightbox('${imageUrl}')" alt="Uploaded image">`;
+            }
+            
+            messageHTML += `<div class="message-time">${timeString}</div></div></div>`;
+            
+            messageDiv.innerHTML = messageHTML;
+            messagesContainer.appendChild(messageDiv);
+            
+            // Auto scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Handle Enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Lightbox functions
+        function openLightbox(imageUrl) {
+            document.getElementById('lightboxImage').src = imageUrl;
+            document.getElementById('lightbox').classList.add('active');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
+        }
+
+        // Add welcome message
+        window.addEventListener('load', () => {
+            addMessage('received', 'Welcome! You can send text messages or upload images.', null);
+        });
+    </script>
+</body>
+</html>
