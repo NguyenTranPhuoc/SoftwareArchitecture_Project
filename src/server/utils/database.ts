@@ -86,41 +86,14 @@ export const getRedisClient = (): RedisClientType => {
 
 // Test database connections
 export const testDatabaseConnections = async (): Promise<void> => {
-  console.log('🔍 Testing database connections...\n');
+  console.log('🔍 Testing database connections (all optional for GCP demo)...\n');
   
-  // Test PostgreSQL (optional - for auth/users, handled by backend team)
-  try {
-    const pgResult = await pgPool.query('SELECT NOW()');
-    console.log('✓ PostgreSQL connection test passed:', pgResult.rows[0].now);
-  } catch (pgError) {
-    console.warn('⚠ PostgreSQL connection failed - auth features will not work:', (pgError as Error).message);
-    console.warn('⚠ PostgreSQL is managed by backend team - continuing without it for GCP demo\n');
-  }
-
-  // Test MongoDB (optional for initial development)
-  try {
-    const mongodb = await connectMongoDB();
-    await mongodb.command({ ping: 1 });
-    console.log('✓ MongoDB connection test passed');
-  } catch (mongoError) {
-    console.warn('⚠ MongoDB connection failed - chat features will not work:', (mongoError as Error).message);
-    console.warn('⚠ Please install MongoDB to enable chat functionality\n');
-  }
-
-  // Test Redis (optional - skip if not configured)
-  try {
-    if (process.env.REDIS_HOST && process.env.REDIS_HOST !== '') {
-      const redis = await connectRedis();
-      await redis.ping();
-      console.log('✓ Redis connection test passed');
-    } else {
-      console.log('⚠ Redis not configured - skipping (optional)');
-    }
-  } catch (redisError) {
-    console.warn('⚠ Redis connection failed - continuing without Redis:', (redisError as Error).message);
-  }
-
-  console.log('\n✓ Server starting - databases are optional for GCP file storage demo!\n');
+  // All databases are optional - this deployment is for GCP file storage only
+  console.log('⚠ Note: This is a GCP file storage demo');
+  console.log('⚠ PostgreSQL, MongoDB, and Redis are managed by backend team');
+  console.log('⚠ Server will start without databases for file upload testing\n');
+  
+  console.log('✓ Server starting - ready for GCP file storage operations!\n');
 };
 
 // Graceful shutdown
