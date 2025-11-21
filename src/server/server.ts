@@ -10,6 +10,7 @@ import {
   connectRedis,
 } from './utils/database';
 import uploadRoutes from './routes/upload';
+import chatRoutes from './routes/chat';
 
 // Load environment variables
 dotenv.config();
@@ -72,6 +73,9 @@ app.get('/api', (req: Request, res: Response) => {
 
 // GCP Upload routes
 app.use('/api/upload', uploadRoutes);
+
+// Chat media upload routes
+app.use('/api/chat', chatRoutes);
 
 // TODO: Import and use route handlers
 // import authRoutes from './routes/auth';
