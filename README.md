@@ -114,24 +114,101 @@ See detailed task breakdown in the [`tasks/`](tasks/) folder.
 
 ## Getting Started
 
-### Installation
+### Quick Start with Docker (Recommended)
+
 ```bash
-# Clone repository
+# 1. Clone repository
 git clone https://github.com/NguyenTranPhuoc/SoftwareArchitecture_Project.git
 cd SoftwareArchitecture_Project
 
-# Install dependencies (when available)
+# 2. Install dependencies
 npm install
 
-# Setup environment variables
+# 3. Setup environment variables (already configured for Docker)
 cp .env.example .env
 
-# Start development server
-npm run dev
+# 4. Start all databases with Docker
+docker-compose up -d
+
+# 5. Build and start the server
+npm run build:server
+npm run start:server
 ```
+
+**Server running at**: http://localhost:5000
+
+**Database UIs**:
+- PostgreSQL Admin: http://localhost:5050 (admin@zalo.com / admin123)
+- MongoDB Express: http://localhost:8081 (admin / admin123)
+- RedisInsight: http://localhost:8001
+
+### Manual Setup
+
+If you prefer manual installation without Docker, see **[SETUP_GUIDE.md](SETUP_GUIDE.md)** for detailed instructions.
+
+## Available Scripts
+
+```bash
+# Backend Development
+npm run dev:server          # Start dev server with hot reload
+npm run build:server        # Build TypeScript to JavaScript
+npm run start:server        # Start production server
+
+# Frontend Development
+npm run dev:client          # Start React development server
+
+# Testing & Quality
+npm test                    # Run tests
+npm run lint                # Run linter
+```
+
+## Test Users
+
+The database is pre-populated with test users (password: `password123`):
+- alice@example.com
+- bob@example.com
+- charlie@example.com
+- nhan@example.com
 
 ## Documentation
 
-- **[Architecture Justification](docs/architecture_docs/Architecture_Justification.md)** - Why we chose this architecture
+### Setup & Deployment
+- 📘 **[Setup Guide](SETUP_GUIDE.md)** - Complete local development setup
+- 📗 **[GCP Setup Guide](GCP_SETUP_GUIDE.md)** - Google Cloud deployment
+- 📙 **[Claude AI Guide](CLAUDE.md)** - Project structure and guidelines
+
+### Implementation Details
+- 🔵 **[Nhan's Chat Service](NHAN_CHAT_SERVICE.md)** - Chat implementation with MongoDB & Redis
+- 🟢 **Huynh Nhu's User Management** - Coming soon
+- 🟡 **Frontend Implementation** - Coming soon
+
+### Architecture
+- **[Architecture Justification](docs/architecture_docs/Architecture_Justification.md)** - Design decisions
 - **[Requirements](Requirement_EN.md)** - Functional and non-functional requirements
+
+## API Endpoints
+
+Once the server is running, you can access:
+
+- **Health Check**: `GET /health`
+- **API Info**: `GET /api`
+- **Conversations**: `POST/GET /api/conversations`
+- **Messages**: `POST/GET /api/messages`
+
+See **[NHAN_CHAT_SERVICE.md](NHAN_CHAT_SERVICE.md)** for complete API documentation.
+
+## Project Status
+
+✅ **Completed**:
+- Server infrastructure with Express + Socket.io
+- Multi-database setup (PostgreSQL, MongoDB, Redis)
+- Chat service with real-time messaging
+- Docker development environment
+- Database initialization scripts
+
+🚧 **In Progress**:
+- User authentication (Huynh Nhu)
+- Frontend web app (Quynh Nhu)
+- Mobile app (Manh)
+- GCP production deployment (Phuoc)
 

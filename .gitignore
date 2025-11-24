@@ -66,14 +66,15 @@ src/client/hooks
 src/client/pages
 src/client/types
 src/client/utils
-src/server/controllers
-src/server/middleware
-src/server/models
-src/server/routes
-src/server/services
-src/server/types
-src/server/utils
+# src/server/controllers
+# src/server/middleware
+# #src/server/models
+# src/server/routes
+# src/server/services
+# src/server/types
+# src/server/utils
 src/shared/types
 tests/client
 tests/integration
 tests/server
+scripts

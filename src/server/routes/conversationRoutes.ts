@@ -1,0 +1,232 @@
+import { Router, Request, Response } from 'express';
+import chatService from '../services/chatService';
+
+const router = Router();
+
+/**
+ * POST /api/conversations
+ * Create a new conversation (direct or group)
+ * Body: { participants: string[], type: 'direct' | 'group', name?: string, avatar?: string }
+ */
+router.post('/', async (req: Request, res: Response) => {
+  try {
+    const { participants, type, name, avatar } = req.body;
+
+    // TODO: Get userId from authentication middleware
+    // For now, using the first participant as creator
+    const createdBy = participants[0];
+
+    // Validation
+    if (!participants || !Array.isArray(participants) || participants.length === 0) {
+      return res.status(400).json({ error: 'Participants array is required' });
+    }
+
+    if (!type || !['direct', 'group'].includes(type)) {
+      return res.status(400).json({ error: 'Type must be either "direct" or "group"' });
+    }
+
+    if (type === 'direct' && participants.length !== 2) {
+      return res.status(400).json({ error: 'Direct conversations must have exactly 2 participants' });
+    }
+
+    if (type === 'group' && participants.length < 2) {
+      return res.status(400).json({ error: 'Group conversations must have at least 2 participants' });
+    }
+
+    if (type === 'group' && !name) {
+      return res.status(400).json({ error: 'Group conversations must have a name' });
+    }
+
+    const conversation = await chatService.createConversation(
+      participants,
+      type,
+      createdBy,
+      name,
+      avatar
+    );
+
+    res.status(201).json({
+      success: true,
+      data: conversation,
+    });
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    res.status(500).json({
+      error: 'Failed to create conversation',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * GET /api/conversations
+ * Get all conversations for the authenticated user
+ * Query params: userId (temporary, will be from auth)
+ */
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    // TODO: Get userId from authentication middleware
+    const userId = req.query.userId as string;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const conversations = await chatService.getUserConversations(userId);
+
+    res.status(200).json({
+      success: true,
+      data: conversations,
+      count: conversations.length,
+    });
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    res.status(500).json({
+      error: 'Failed to fetch conversations',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * GET /api/conversations/:conversationId
+ * Get conversation details by ID
+ */
+router.get('/:conversationId', async (req: Request, res: Response) => {
+  try {
+    const { conversationId } = req.params;
+
+    if (!conversationId) {
+      return res.status(400).json({ error: 'Conversation ID is required' });
+    }
+
+    const conversation = await chatService.getConversation(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: conversation,
+    });
+  } catch (error) {
+    console.error('Error fetching conversation:', error);
+    res.status(500).json({
+      error: 'Failed to fetch conversation',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * POST /api/conversations/:conversationId/participants
+ * Add a participant to a group conversation
+ * Body: { userId: string }
+ */
+router.post('/:conversationId/participants', async (req: Request, res: Response) => {
+  try {
+    const { conversationId } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Verify conversation exists and is a group
+    const conversation = await chatService.getConversation(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    if (conversation.type !== 'group') {
+      return res.status(400).json({ error: 'Can only add participants to group conversations' });
+    }
+
+    const success = await chatService.addParticipant(conversationId, userId);
+
+    if (success) {
+      res.status(200).json({
+        success: true,
+        message: 'Participant added successfully',
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to add participant' });
+    }
+  } catch (error) {
+    console.error('Error adding participant:', error);
+    res.status(500).json({
+      error: 'Failed to add participant',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * DELETE /api/conversations/:conversationId/participants/:userId
+ * Remove a participant from a group conversation
+ */
+router.delete('/:conversationId/participants/:userId', async (req: Request, res: Response) => {
+  try {
+    const { conversationId, userId } = req.params;
+
+    // Verify conversation exists and is a group
+    const conversation = await chatService.getConversation(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    if (conversation.type !== 'group') {
+      return res.status(400).json({ error: 'Can only remove participants from group conversations' });
+    }
+
+    const success = await chatService.removeParticipant(conversationId, userId);
+
+    if (success) {
+      res.status(200).json({
+        success: true,
+        message: 'Participant removed successfully',
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to remove participant' });
+    }
+  } catch (error) {
+    console.error('Error removing participant:', error);
+    res.status(500).json({
+      error: 'Failed to remove participant',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * GET /api/conversations/:conversationId/unread
+ * Get unread message count for a conversation
+ * Query params: userId
+ */
+router.get('/:conversationId/unread', async (req: Request, res: Response) => {
+  try {
+    const { conversationId } = req.params;
+    // TODO: Get userId from authentication middleware
+    const userId = req.query.userId as string;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const count = await chatService.getUnreadCount(userId, conversationId);
+
+    res.status(200).json({
+      success: true,
+      data: { count },
+    });
+  } catch (error) {
+    console.error('Error getting unread count:', error);
+    res.status(500).json({
+      error: 'Failed to get unread count',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+export default router;
