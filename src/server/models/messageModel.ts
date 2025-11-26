@@ -3,21 +3,24 @@ import { getMongoDB } from '../utils/database';
 
 export interface IMessage {
   _id?: ObjectId;
-  conversationId: string;
-  senderId: string;
+  conversationId: ObjectId; // ✅ Changed from string to ObjectId
+  senderId: ObjectId; // ✅ Changed from string to ObjectId
   content: string;
-  type: 'text' | 'image' | 'file' | 'audio' | 'video';
-  fileUrl?: string; // For media messages
+  type: 'text' | 'image' | 'file' | 'audio' | 'video' | 'sticker' | 'location'; // ✅ Added sticker, location
+  fileUrl?: string; // For media messages (GCS bucket URL)
   fileName?: string; // For file messages
   fileSize?: number; // For file messages
-  replyTo?: string; // Message ID being replied to
-  readBy: string[]; // Array of user IDs who have read the message
+  thumbnailUrl?: string; // ✅ NEW: Thumbnail for video/image
+  replyTo?: ObjectId; // ✅ Changed from string to ObjectId - Message ID being replied to
+  readBy: ObjectId[]; // ✅ Changed from string[] to ObjectId[] - Array of user IDs who have read the message
   reactions?: {
     emoji: string;
-    userId: string;
+    userId: ObjectId; // ✅ Changed from string to ObjectId
   }[];
   isEdited: boolean;
+  editedAt?: Date; // ✅ NEW: Timestamp of last edit
   isDeleted: boolean;
+  deletedAt?: Date; // ✅ NEW: Timestamp of deletion
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,7 +60,7 @@ export class MessageModel {
     skip: number = 0
   ): Promise<IMessage[]> {
     return await this.collection
-      .find({ conversationId, isDeleted: false })
+      .find({ conversationId: new ObjectId(conversationId), isDeleted: false }) // ✅ Convert to ObjectId
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -70,7 +73,7 @@ export class MessageModel {
   ): Promise<IMessage[]> {
     return await this.collection
       .find({
-        conversationId,
+        conversationId: new ObjectId(conversationId), // ✅ Convert to ObjectId
         createdAt: { $gt: timestamp },
         isDeleted: false,
       })
@@ -82,7 +85,7 @@ export class MessageModel {
     const result = await this.collection.updateOne(
       { _id: new ObjectId(messageId) },
       {
-        $addToSet: { readBy: userId },
+        $addToSet: { readBy: new ObjectId(userId) }, // ✅ Convert userId to ObjectId
         $set: { updatedAt: new Date() },
       }
     );
@@ -94,14 +97,15 @@ export class MessageModel {
     conversationId: string,
     userId: string
   ): Promise<number> {
+    const userObjId = new ObjectId(userId); // ✅ Convert once for reuse
     const result = await this.collection.updateMany(
       {
-        conversationId,
-        senderId: { $ne: userId }, // Don't mark own messages
-        readBy: { $ne: userId }, // Only messages not already read
+        conversationId: new ObjectId(conversationId), // ✅ Convert to ObjectId
+        senderId: { $ne: userObjId }, // Don't mark own messages
+        readBy: { $ne: userObjId }, // Only messages not already read
       },
       {
-        $addToSet: { readBy: userId },
+        $addToSet: { readBy: userObjId },
         $set: { updatedAt: new Date() },
       }
     );
@@ -110,13 +114,15 @@ export class MessageModel {
   }
 
   async updateMessage(messageId: string, content: string): Promise<boolean> {
+    const now = new Date();
     const result = await this.collection.updateOne(
       { _id: new ObjectId(messageId) },
       {
         $set: {
           content,
           isEdited: true,
-          updatedAt: new Date(),
+          editedAt: now, // ✅ NEW: Track when message was edited
+          updatedAt: now,
         },
       }
     );
@@ -126,13 +132,15 @@ export class MessageModel {
 
   async deleteMessage(messageId: string, softDelete: boolean = true): Promise<boolean> {
     if (softDelete) {
+      const now = new Date();
       const result = await this.collection.updateOne(
         { _id: new ObjectId(messageId) },
         {
           $set: {
             isDeleted: true,
+            deletedAt: now, // ✅ NEW: Track when message was deleted
             content: 'This message has been deleted',
-            updatedAt: new Date(),
+            updatedAt: now,
           },
         }
       );
@@ -148,7 +156,7 @@ export class MessageModel {
       { _id: new ObjectId(messageId) },
       {
         $push: {
-          reactions: { emoji, userId },
+          reactions: { emoji, userId: new ObjectId(userId) }, // ✅ Convert userId to ObjectId
         },
         $set: { updatedAt: new Date() },
       }
@@ -162,7 +170,7 @@ export class MessageModel {
       { _id: new ObjectId(messageId) },
       {
         $pull: {
-          reactions: { emoji, userId },
+          reactions: { emoji, userId: new ObjectId(userId) }, // ✅ Convert userId to ObjectId
         },
         $set: { updatedAt: new Date() },
       }
@@ -172,10 +180,11 @@ export class MessageModel {
   }
 
   async getUnreadCount(conversationId: string, userId: string): Promise<number> {
+    const userObjId = new ObjectId(userId); // ✅ Convert once for reuse
     return await this.collection.countDocuments({
-      conversationId,
-      senderId: { $ne: userId },
-      readBy: { $ne: userId },
+      conversationId: new ObjectId(conversationId), // ✅ Convert to ObjectId
+      senderId: { $ne: userObjId },
+      readBy: { $ne: userObjId },
       isDeleted: false,
     });
   }
@@ -183,7 +192,7 @@ export class MessageModel {
   async searchMessages(conversationId: string, searchTerm: string, limit: number = 20): Promise<IMessage[]> {
     return await this.collection
       .find({
-        conversationId,
+        conversationId: new ObjectId(conversationId), // ✅ Convert to ObjectId
         content: { $regex: searchTerm, $options: 'i' },
         isDeleted: false,
       })

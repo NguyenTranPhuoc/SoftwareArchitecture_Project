@@ -117,13 +117,14 @@ export class ChatService {
       replyTo,
     });
 
-    // Update conversation's last message
-    await conversationModel.updateLastMessage(conversationId, {
-      content,
-      senderId,
-      timestamp: message.createdAt,
-      type,
-    });
+    // ✅ UPDATED: Use lastMessageId instead of embedding full object
+    if (message._id) {
+      await conversationModel.updateLastMessage(
+        conversationId,
+        message._id.toString(), // Pass message ID
+        message.createdAt // Pass timestamp
+      );
+    }
 
     // Get conversation to invalidate caches
     const conversation = await conversationModel.findConversationById(conversationId);
@@ -131,11 +132,12 @@ export class ChatService {
       // Invalidate conversation cache
       await this.invalidateConversationCache(conversationId);
 
-      // Invalidate user conversations cache for all participants
-      await this.invalidateUserConversationsCache(conversation.participants);
+      // ✅ Convert ObjectId[] to string[] for cache keys
+      const participantIds = conversation.participants.map(id => id.toString());
+      await this.invalidateUserConversationsCache(participantIds);
 
       // Update unread counts for all participants except sender
-      for (const participantId of conversation.participants) {
+      for (const participantId of participantIds) {
         if (participantId !== senderId) {
           await this.incrementUnreadCount(participantId, conversationId);
         }
@@ -265,6 +267,49 @@ export class ChatService {
     }
 
     return success;
+  }
+
+  /**
+   * ✅ NEW: Archive conversation for a user
+   */
+  async archiveConversation(conversationId: string, userId: string): Promise<boolean> {
+    const success = await conversationModel.archiveConversation(conversationId, userId);
+
+    if (success) {
+      await this.invalidateConversationCache(conversationId);
+      await this.invalidateUserConversationsCache([userId]);
+    }
+
+    return success;
+  }
+
+  /**
+   * ✅ NEW: Unarchive conversation for a user
+   */
+  async unarchiveConversation(conversationId: string, userId: string): Promise<boolean> {
+    const success = await conversationModel.unarchiveConversation(conversationId, userId);
+
+    if (success) {
+      await this.invalidateConversationCache(conversationId);
+      await this.invalidateUserConversationsCache([userId]);
+    }
+
+    return success;
+  }
+
+  /**
+   * ✅ NEW: Get conversation with last message details ($lookup)
+   */
+  async getConversationWithLastMessage(conversationId: string) {
+    return await conversationModel.getConversationWithLastMessage(conversationId);
+  }
+
+  /**
+   * ✅ NEW: Get user conversations with last message details ($lookup)
+   */
+  async getUserConversationsWithLastMessage(userId: string) {
+    // Note: Skipping cache for this method since it uses aggregation
+    return await conversationModel.getUserConversationsWithLastMessage(userId);
   }
 
   // Private helper methods for cache management

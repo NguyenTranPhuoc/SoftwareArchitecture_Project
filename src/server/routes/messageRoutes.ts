@@ -49,8 +49,9 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
-    // Verify sender is a participant
-    if (!conversation.participants.includes(senderId)) {
+    // ✅ Verify sender is a participant (participants are now ObjectId[])
+    const participantIds = conversation.participants.map(id => id.toString());
+    if (!participantIds.includes(senderId)) {
       return res.status(403).json({ error: 'You are not a participant in this conversation' });
     }
 
@@ -195,8 +196,9 @@ router.post('/:conversationId/read', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
-    // Verify user is a participant
-    if (!conversation.participants.includes(userId)) {
+    // ✅ Verify user is a participant (participants are now ObjectId[])
+    const participantIds = conversation.participants.map(id => id.toString());
+    if (!participantIds.includes(userId)) {
       return res.status(403).json({ error: 'You are not a participant in this conversation' });
     }
 

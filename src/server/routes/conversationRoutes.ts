@@ -229,4 +229,117 @@ router.get('/:conversationId/unread', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * ✅ NEW: POST /api/conversations/:conversationId/archive
+ * Archive conversation for a user
+ * Body: { userId: string }
+ */
+router.post('/:conversationId/archive', async (req: Request, res: Response) => {
+  try {
+    const { conversationId } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Verify conversation exists
+    const conversation = await chatService.getConversation(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    // Verify user is a participant
+    const participantIds = conversation.participants.map(id => id.toString());
+    if (!participantIds.includes(userId)) {
+      return res.status(403).json({ error: 'You are not a participant in this conversation' });
+    }
+
+    const success = await chatService.archiveConversation(conversationId, userId);
+
+    if (success) {
+      res.status(200).json({
+        success: true,
+        message: 'Conversation archived successfully',
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to archive conversation' });
+    }
+  } catch (error) {
+    console.error('Error archiving conversation:', error);
+    res.status(500).json({
+      error: 'Failed to archive conversation',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * ✅ NEW: POST /api/conversations/:conversationId/unarchive
+ * Unarchive conversation for a user
+ * Body: { userId: string }
+ */
+router.post('/:conversationId/unarchive', async (req: Request, res: Response) => {
+  try {
+    const { conversationId } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Verify conversation exists
+    const conversation = await chatService.getConversation(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    const success = await chatService.unarchiveConversation(conversationId, userId);
+
+    if (success) {
+      res.status(200).json({
+        success: true,
+        message: 'Conversation unarchived successfully',
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to unarchive conversation' });
+    }
+  } catch (error) {
+    console.error('Error unarchiving conversation:', error);
+    res.status(500).json({
+      error: 'Failed to unarchive conversation',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * ✅ NEW: GET /api/conversations/with-messages/:userId
+ * Get user conversations with last message details (uses $lookup aggregation)
+ * This returns conversations with full last message object instead of just reference
+ */
+router.get('/with-messages/:userId', async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const conversations = await chatService.getUserConversationsWithLastMessage(userId);
+
+    res.status(200).json({
+      success: true,
+      data: conversations,
+      count: conversations.length,
+    });
+  } catch (error) {
+    console.error('Error fetching conversations with messages:', error);
+    res.status(500).json({
+      error: 'Failed to fetch conversations with messages',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
 export default router;
