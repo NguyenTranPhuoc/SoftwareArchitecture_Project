@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type MessageType = "text" | "image" | "file";
+export type MessageType = "text" | "image" | "file" | "video" | "sticker";
 
 export interface UserProfile {
   id: string;
@@ -187,11 +187,18 @@ const mockMessages: Message[] = [
 // File validation constants
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
   "image/gif",
   "image/webp",
+];
+const ALLOWED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/webm",
+  "video/ogg",
+  "video/quicktime",
 ];
 const ALLOWED_FILE_TYPES = [
   "application/pdf",
@@ -202,19 +209,33 @@ const ALLOWED_FILE_TYPES = [
   "application/x-rar-compressed",
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.adobe.illustrator",
-  "application/postscript",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/plain",
   ...ALLOWED_IMAGE_TYPES,
 ];
 
 // File validation utilities
 export function validateFile(
   file: File,
-  type: "image" | "file"
+  type: "image" | "file" | "video"
 ): { valid: boolean; error?: string } {
-  const maxSize = type === "image" ? MAX_IMAGE_SIZE : MAX_FILE_SIZE;
-  const allowedTypes =
-    type === "image" ? ALLOWED_IMAGE_TYPES : ALLOWED_FILE_TYPES;
+  let maxSize: number;
+  let allowedTypes: string[];
+
+  switch (type) {
+    case "image":
+      maxSize = MAX_IMAGE_SIZE;
+      allowedTypes = ALLOWED_IMAGE_TYPES;
+      break;
+    case "video":
+      maxSize = MAX_VIDEO_SIZE;
+      allowedTypes = ALLOWED_VIDEO_TYPES;
+      break;
+    default:
+      maxSize = MAX_FILE_SIZE;
+      allowedTypes = ALLOWED_FILE_TYPES;
+  }
 
   if (file.size > maxSize) {
     const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(0);
@@ -228,7 +249,8 @@ export function validateFile(
     return {
       valid: false,
       error: `Định dạng file không được hỗ trợ. ${
-        type === "image" ? "Chỉ chấp nhận JPEG, PNG, GIF." : ""
+        type === "image" ? "Chỉ chấp nhận JPEG, PNG, GIF, WebP." :
+        type === "video" ? "Chỉ chấp nhận MP4, WebM, OGG." : ""
       }`,
     };
   }

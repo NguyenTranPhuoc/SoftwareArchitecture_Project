@@ -43,7 +43,7 @@ coverage/
 .cache/
 
 # Exclude all .md files except README.md and Architecture_Justification.md
-*.md
+#*.md
 !README.md
 !docs/architecture_docs/Architecture_Justification.md
 

@@ -25,8 +25,10 @@ export default function ChatWindow() {
 
   const [text, setText] = useState("");
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const conv = conversations.find((c) => c.id === selectedConversationId);
   const convMessages = messages.filter(
@@ -148,6 +150,46 @@ export default function ChatWindow() {
     imageInputRef.current?.click();
   };
 
+  const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !conv) return;
+
+    const validation = validateFile(file, "video");
+    if (!validation.valid) {
+      alert(validation.error);
+      return;
+    }
+
+    await sendFileMessage(conv.id, file, "file", (payload) => {
+      if (payload.fileMetadata.url) {
+        socketMethods.sendFileMessage({
+          conversationId: payload.conversationId,
+          content: "🎥 Video",
+          type: "video" as any,
+          fileUrl: payload.fileMetadata.url,
+          fileName: payload.fileMetadata.filename,
+          fileSize: payload.fileMetadata.size,
+          thumbnailUrl: payload.fileMetadata.thumbnailUrl,
+        });
+      }
+    });
+    e.target.value = "";
+  };
+
+  const handleVideoButtonClick = () => {
+    videoInputRef.current?.click();
+  };
+
+  const handleStickerClick = (sticker: string) => {
+    socketMethods.sendMessage({
+      conversationId: conv.id,
+      content: sticker,
+    });
+    setShowStickerPicker(false);
+  };
+
+  const commonStickers = ["😀", "😂", "❤️", "👍", "🎉", "😍", "😊", "🔥", "💯", "✨", "👏", "🙏", "💪", "😎", "🤔", "😢", "😡", "🤣", "😘", "🥰"];
+
   const handleDownload = (url: string, filename: string) => {
     const link = document.createElement("a");
     link.href = url;
@@ -242,13 +284,39 @@ export default function ChatWindow() {
         />
       )}
 
+      {/* STICKER PICKER */}
+      {showStickerPicker && (
+        <div className="border-t border-slate-200 bg-white p-3">
+          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+            {commonStickers.map((sticker, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleStickerClick(sticker)}
+                className="text-2xl hover:bg-slate-100 w-10 h-10 rounded flex items-center justify-center"
+              >
+                {sticker}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
-      <div className="h-16 border-t border-slate-200 px-4 flex items-center gap-3 bg-white">
-        <button title="Sticker">😊</button>
-        <button title="Ảnh" onClick={handleImageButtonClick}>
+      <div className="h-16 border-t border-slate-200 px-4 flex items-center gap-3 bg-white relative">
+        <button
+          title="Sticker/Emoji"
+          onClick={() => setShowStickerPicker(!showStickerPicker)}
+          className={`text-xl ${showStickerPicker ? 'bg-slate-100' : ''} hover:bg-slate-100 px-2 py-1 rounded`}
+        >
+          😊
+        </button>
+        <button title="Ảnh" onClick={handleImageButtonClick} className="text-xl hover:bg-slate-100 px-2 py-1 rounded">
           🖼️
         </button>
-        <button title="File" onClick={handleFileButtonClick}>
+        <button title="Video" onClick={handleVideoButtonClick} className="text-xl hover:bg-slate-100 px-2 py-1 rounded">
+          🎥
+        </button>
+        <button title="Tài liệu" onClick={handleFileButtonClick} className="text-xl hover:bg-slate-100 px-2 py-1 rounded">
           📎
         </button>
 
@@ -261,7 +329,15 @@ export default function ChatWindow() {
         />
         <input
           type="file"
+          ref={videoInputRef}
+          accept="video/mp4,video/webm,video/ogg,video/quicktime"
+          onChange={handleVideoSelect}
+          className="hidden"
+        />
+        <input
+          type="file"
           ref={fileInputRef}
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar"
           onChange={handleFileSelect}
           className="hidden"
         />

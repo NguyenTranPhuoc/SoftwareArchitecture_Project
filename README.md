@@ -195,7 +195,6 @@ Once the server is running, you can access:
 - **Conversations**: `POST/GET /api/conversations`
 - **Messages**: `POST/GET /api/messages`
 
-See **[NHAN_CHAT_SERVICE.md](NHAN_CHAT_SERVICE.md)** for complete API documentation.
 
 ## Project Status
 
