@@ -17,11 +17,14 @@ export interface IConversation {
 }
 
 export class ConversationModel {
-  private collection: Collection<IConversation>;
+  private collection?: Collection<IConversation>;
 
-  constructor() {
-    const db = getMongoDB();
-    this.collection = db.collection<IConversation>('conversations');
+  private getCollection(): Collection<IConversation> {
+    if (!this.collection) {
+      const db = getMongoDB();
+      this.collection = db.collection<IConversation>('conversations');
+    }
+    return this.collection;
   }
 
   async createConversation(data: Omit<IConversation, '_id' | 'createdAt' | 'updatedAt'>): Promise<IConversation> {
@@ -31,7 +34,7 @@ export class ConversationModel {
       updatedAt: new Date(),
     };
 
-    const result = await this.collection.insertOne(conversation);
+    const result = await this.getCollection().insertOne(conversation);
     return {
       ...conversation,
       _id: result.insertedId,
@@ -39,18 +42,18 @@ export class ConversationModel {
   }
 
   async findConversationById(conversationId: string): Promise<IConversation | null> {
-    return await this.collection.findOne({ _id: new ObjectId(conversationId) });
+    return await this.getCollection().findOne({ _id: new ObjectId(conversationId) });
   }
 
   async findConversationsByUserId(userId: string): Promise<IConversation[]> {
-    return await this.collection
+    return await this.getCollection()
       .find({ participants: new ObjectId(userId) }) // ✅ Convert userId to ObjectId
       .sort({ lastMessageTimestamp: -1 }) // ✅ Sort by lastMessageTimestamp instead of updatedAt for better UX
       .toArray();
   }
 
   async findDirectConversation(userId1: string, userId2: string): Promise<IConversation | null> {
-    return await this.collection.findOne({
+    return await this.getCollection().findOne({
       type: 'direct',
       participants: { $all: [new ObjectId(userId1), new ObjectId(userId2)] }, // ✅ Convert both userIds to ObjectId
     });
@@ -62,7 +65,7 @@ export class ConversationModel {
     messageId: string,
     timestamp: Date
   ): Promise<boolean> {
-    const result = await this.collection.updateOne(
+    const result = await this.getCollection().updateOne(
       { _id: new ObjectId(conversationId) },
       {
         $set: {
@@ -80,7 +83,7 @@ export class ConversationModel {
     conversationId: string,
     updates: Partial<IConversation>
   ): Promise<boolean> {
-    const result = await this.collection.updateOne(
+    const result = await this.getCollection().updateOne(
       { _id: new ObjectId(conversationId) },
       {
         $set: {
@@ -94,12 +97,12 @@ export class ConversationModel {
   }
 
   async deleteConversation(conversationId: string): Promise<boolean> {
-    const result = await this.collection.deleteOne({ _id: new ObjectId(conversationId) });
+    const result = await this.getCollection().deleteOne({ _id: new ObjectId(conversationId) });
     return result.deletedCount > 0;
   }
 
   async addParticipant(conversationId: string, userId: string): Promise<boolean> {
-    const result = await this.collection.updateOne(
+    const result = await this.getCollection().updateOne(
       { _id: new ObjectId(conversationId) },
       {
         $addToSet: { participants: new ObjectId(userId) }, // ✅ Convert userId to ObjectId
@@ -111,7 +114,7 @@ export class ConversationModel {
   }
 
   async removeParticipant(conversationId: string, userId: string): Promise<boolean> {
-    const result = await this.collection.updateOne(
+    const result = await this.getCollection().updateOne(
       { _id: new ObjectId(conversationId) },
       {
         $pull: { participants: new ObjectId(userId) }, // ✅ Convert userId to ObjectId
@@ -124,7 +127,7 @@ export class ConversationModel {
 
   // ✅ NEW: Archive/unarchive conversation for a user
   async archiveConversation(conversationId: string, userId: string): Promise<boolean> {
-    const result = await this.collection.updateOne(
+    const result = await this.getCollection().updateOne(
       { _id: new ObjectId(conversationId) },
       {
         $addToSet: { archivedBy: new ObjectId(userId) },
@@ -136,7 +139,7 @@ export class ConversationModel {
   }
 
   async unarchiveConversation(conversationId: string, userId: string): Promise<boolean> {
-    const result = await this.collection.updateOne(
+    const result = await this.getCollection().updateOne(
       { _id: new ObjectId(conversationId) },
       {
         $pull: { archivedBy: new ObjectId(userId) },
@@ -147,7 +150,7 @@ export class ConversationModel {
     // If no users have archived, set isArchived to false
     const conversation = await this.findConversationById(conversationId);
     if (conversation && (!conversation.archivedBy || conversation.archivedBy.length === 0)) {
-      await this.collection.updateOne(
+      await this.getCollection().updateOne(
         { _id: new ObjectId(conversationId) },
         { $set: { isArchived: false } }
       );
@@ -158,7 +161,7 @@ export class ConversationModel {
 
   // ✅ NEW: Get last message details with $lookup
   async getConversationWithLastMessage(conversationId: string) {
-    const result = await this.collection
+    const result = await this.getCollection()
       .aggregate([
         { $match: { _id: new ObjectId(conversationId) } },
         {
@@ -178,7 +181,7 @@ export class ConversationModel {
 
   // ✅ NEW: Get all conversations with last message details
   async getUserConversationsWithLastMessage(userId: string) {
-    return await this.collection
+    return await this.getCollection()
       .aggregate([
         { $match: { participants: new ObjectId(userId) } },
         {
