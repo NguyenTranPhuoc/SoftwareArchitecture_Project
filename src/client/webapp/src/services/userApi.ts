@@ -45,15 +45,17 @@ class UserApiService {
     return data as T;
   }
 
-  async getProfile(userId: string): Promise<UserProfile> {
-    return this.request<UserProfile>(`/${userId}`, {
+  async getProfile(userId?: string): Promise<UserProfile> {
+    // Use /me endpoint for authenticated user's own profile
+    return this.request<UserProfile>('/me', {
       method: 'GET',
     });
   }
 
-  async updateProfile(userId: string, data: UpdateProfileRequest): Promise<UserProfile> {
-    return this.request<UserProfile>(`/${userId}`, {
-      method: 'PUT',
+  async updateProfile(userId: string | undefined, data: UpdateProfileRequest): Promise<UserProfile> {
+    // Use /me endpoint for authenticated user's own profile with PATCH
+    return this.request<UserProfile>('/me', {
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
