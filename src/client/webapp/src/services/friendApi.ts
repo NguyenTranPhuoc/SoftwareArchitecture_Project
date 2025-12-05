@@ -1,15 +1,34 @@
-import axios from 'axios';
-
 const USER_BASE_URL = import.meta.env.VITE_USER_URL || 'http://localhost:3002/users';
 
-// Create axios instance with auth token
-const getAuthHeaders = () => {
+// Helper function for authenticated requests
+async function fetchWithAuth<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
   const token = localStorage.getItem('accessToken');
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-};
+  const url = `${USER_BASE_URL}${endpoint}`;
+  
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(error.error || `HTTP error! status: ${response.status}`);
+  }
+
+  // Handle 204 No Content
+  if (response.status === 204) {
+    return null as T;
+  }
+
+  return response.json();
+}
 
 export interface FriendProfile {
   id: string;
@@ -35,61 +54,47 @@ export interface FriendStats {
  * Search users by name or email
  */
 export async function searchUsers(query: string): Promise<FriendProfile[]> {
-  const response = await axios.get(`${USER_BASE_URL}/search`, {
-    params: { q: query },
-    headers: getAuthHeaders(),
-  });
-  return response.data;
+  return fetchWithAuth<FriendProfile[]>(`/search?q=${encodeURIComponent(query)}`);
 }
 
 /**
  * Send friend request to a user
  */
 export async function sendFriendRequest(userId: string): Promise<void> {
-  await axios.post(
-    `${USER_BASE_URL}/friends/request/${userId}`,
-    {},
-    { headers: getAuthHeaders() }
-  );
+  await fetchWithAuth<void>(`/friends/request/${userId}`, {
+    method: 'POST',
+  });
 }
 
 /**
  * Get list of friends (accepted)
  */
 export async function getFriends(): Promise<FriendProfile[]> {
-  const response = await axios.get(`${USER_BASE_URL}/friends`, {
-    headers: getAuthHeaders(),
-  });
-  return response.data;
+  return fetchWithAuth<FriendProfile[]>('/friends');
 }
 
 /**
  * Get pending friend requests (incoming)
  */
 export async function getPendingRequests(): Promise<FriendRequest[]> {
-  const response = await axios.get(`${USER_BASE_URL}/friends/pending`, {
-    headers: getAuthHeaders(),
-  });
-  return response.data;
+  return fetchWithAuth<FriendRequest[]>('/friends/pending');
 }
 
 /**
  * Accept a friend request
  */
 export async function acceptFriendRequest(friendshipId: string): Promise<void> {
-  await axios.put(
-    `${USER_BASE_URL}/friends/accept/${friendshipId}`,
-    {},
-    { headers: getAuthHeaders() }
-  );
+  await fetchWithAuth<void>(`/friends/accept/${friendshipId}`, {
+    method: 'PUT',
+  });
 }
 
 /**
  * Reject or remove a friend
  */
 export async function rejectOrRemoveFriend(friendshipId: string): Promise<void> {
-  await axios.delete(`${USER_BASE_URL}/friends/reject/${friendshipId}`, {
-    headers: getAuthHeaders(),
+  await fetchWithAuth<void>(`/friends/reject/${friendshipId}`, {
+    method: 'DELETE',
   });
 }
 
@@ -97,10 +102,7 @@ export async function rejectOrRemoveFriend(friendshipId: string): Promise<void> 
  * Get friend statistics
  */
 export async function getFriendStats(): Promise<FriendStats> {
-  const response = await axios.get(`${USER_BASE_URL}/stats`, {
-    headers: getAuthHeaders(),
-  });
-  return response.data;
+  return fetchWithAuth<FriendStats>('/stats');
 }
 
 const friendApi = {

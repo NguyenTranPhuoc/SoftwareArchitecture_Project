@@ -1,11 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type UserProfile } from "../store/chatStore";
 import friendApi, { type FriendRequest as ApiFriendRequest } from "../services/friendApi";
 
-// Types
+// Local types for this component
+interface UserInfo {
+  id: string;
+  name: string;
+  avatar: string;
+  status: "offline" | "online";
+}
+
 interface FriendRequest {
   id: string;
-  user: UserProfile;
+  user: UserInfo;
   date: string;
   source: string;
   message?: string;
@@ -116,12 +122,12 @@ export default function FriendRequestsView() {
               >
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold">
-                    {request.user.displayName.charAt(0)}
+                    {request.user.name.charAt(0)}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <div className="text-sm font-medium">
-                        {request.user.displayName}
+                        {request.user.name}
                       </div>
                       <button className="w-6 h-6 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-full">
                         💬
@@ -176,12 +182,12 @@ export default function FriendRequestsView() {
               >
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold">
-                    {request.user.displayName.charAt(0)}
+                    {request.user.name.charAt(0)}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <div className="text-sm font-medium">
-                        {request.user.displayName}
+                        {request.user.name}
                       </div>
                       <button className="w-6 h-6 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-full">
                         💬
