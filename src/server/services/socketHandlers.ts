@@ -21,18 +21,23 @@ export function setupSocketHandlers(io: Server) {
         await redis.set(`${ONLINE_USERS_PREFIX}${userId}`, 'true', { EX: 3600 });
         await redis.set(`${USER_SOCKET_PREFIX}${userId}`, socket.id, { EX: 3600 });
 
-        // Get user's conversations and join them
-        const conversations = await chatService.getUserConversations(userId);
-        for (const conversation of conversations) {
-          if (conversation._id) {
-            socket.join(`conversation:${conversation._id.toString()}`);
+        // Get user's conversations and join them (skip if error - user might be new)
+        try {
+          const conversations = await chatService.getUserConversations(userId);
+          for (const conversation of conversations) {
+            if (conversation._id) {
+              socket.join(`conversation:${conversation._id.toString()}`);
+            }
           }
+        } catch (convError) {
+          console.log(`User ${userId} has no conversations yet (possibly new user)`);
         }
 
         // Notify user's contacts that they're online
         socket.broadcast.emit('user:online', { userId });
 
         console.log(`User ${userId} joined with socket ${socket.id}`);
+        socket.emit('user:joined', { userId, socketId: socket.id });
       } catch (error) {
         console.error('Error in user:join:', error);
         socket.emit('error', { message: 'Failed to join' });
