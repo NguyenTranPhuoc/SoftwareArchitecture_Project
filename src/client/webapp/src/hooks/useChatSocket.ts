@@ -11,7 +11,7 @@ export function useChatSocket() {
 
   useEffect(() => {
     // Connect to Socket.IO server
-    const socket = io("http://localhost:5000", {
+    const socket = io(import.meta.env.VITE_API_URL || "http://localhost:6000", {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,

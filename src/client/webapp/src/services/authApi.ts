@@ -1,5 +1,5 @@
 // Auth API service for authentication
-const AUTH_BASE_URL = 'http://localhost:3001/auth';
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:3001/auth';
 
 interface AuthResponse {
   success?: boolean;
