@@ -79,4 +79,4 @@ src/shared/types
 tests/client
 tests/integration
 tests/server
-scripts
+scriptsconfig/*.json
