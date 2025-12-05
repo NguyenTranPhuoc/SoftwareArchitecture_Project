@@ -1,0 +1,64 @@
+﻿services:
+  postgres:
+    image: postgres:14-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis/redis-stack:latest # Using redis-stack for a modern image
+    ports:
+      - "6379:6379" # Default Redis port
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"] # Check if Redis is healthy
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./auth-service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      NODE_PATH: /usr/src/app/auth-service/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy 
+      redis: 
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: .
+      dockerfile: ./user-service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      NODE_PATH: /usr/src/app/user-service/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

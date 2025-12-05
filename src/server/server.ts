@@ -74,13 +74,15 @@ app.get('/api', (req: Request, res: Response) => {
   });
 });
 
-// GCP Upload routes
-app.use('/api/upload', uploadRoutes);
+// Import route handlers
+import conversationRoutes from './routes/conversationRoutes';
+import messageRoutes from './routes/messageRoutes';
 
-// Chat media upload routes
-app.use('/api/chat', chatRoutes);
+// Register routes
+app.use('/api/conversations', conversationRoutes);
+app.use('/api/messages', messageRoutes);
 
-// TODO: Import and use route handlers
+// TODO: Import and use remaining route handlers
 // import authRoutes from './routes/auth';
 // import userRoutes from './routes/users';
 // import friendRoutes from './routes/friends';
@@ -88,15 +90,11 @@ app.use('/api/chat', chatRoutes);
 // app.use('/api/users', userRoutes);
 // app.use('/api/friends', friendRoutes);
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+// Import and setup Socket.IO handlers
+import { setupSocketHandlers } from './services/socketHandlers';
 
-  // TODO: Implement socket event handlers
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
-});
+// Setup Socket.IO connection handling
+setupSocketHandlers(io);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

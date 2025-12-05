@@ -42,9 +42,10 @@ coverage/
 *.tmp
 .cache/
 
-# Exclude some .md files
-# *.md
-# !README.md
+# Exclude all .md files except specific ones
+#*.md
+!README.md
+!docs/architecture_docs/Architecture_Justification.md
 
 # Ignore placeholder directories without proper structure
 # Temporary/placeholder files without extensions
@@ -66,9 +67,16 @@ src/client/hooks
 src/client/pages
 src/client/types
 src/client/utils
-src/server/controllers
-src/server/models
-src/server/types
+# Commented out - feature/chat branch needs these
+# src/server/controllers
+# src/server/middleware
+# src/server/models
+# src/server/routes
+# src/server/services
+# src/server/types
+# src/server/utils
+src/shared/types
 tests/client
 tests/integration
 tests/server
+scripts

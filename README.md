@@ -22,37 +22,30 @@ This project demonstrates a **Layered Architecture** with **MVC pattern**, showc
 
 ```
 zalo-clone/
-├── src/                          # Source code
-│   ├── client/                   # Frontend React web application
-│   ├── server/                   # Backend Node.js application
-│   └── shared/                   # Shared code between client/server
+├── 📂 src/                          # Source code
+│   ├── 📂 client/                   # Frontend React web application
+│   ├── 📂 server/                   # Backend Node.js application
+│   └── 📂 shared/                   # Shared code between client/server
 │
-├── docs/                         # Documentation
-│   ├── GCP_SETUP_GUIDE.md        # GCP deployment guide
-│   ├── CHAT_UPLOAD_GUIDE.md      # Chat upload API
-│   ├── IMAGE_DISPLAY_GUIDE.md    # Image display guide
-│   ├── DEPLOYMENT_FIX.md         # Deployment fixes
-│   ├── TROUBLESHOOTING.md        # Common issues
-│   └── DEVOPS_ACTION_PLAN.md     # DevOps action plan
+├── 📂 docs/                         # Documentation
+│   ├── 📂 api/                      # API documentation
+│   ├── 📂 architecture/             # Architecture documentation
+│   └── 📂 user-guide/               # User guides
 │
-├── public/                       # Static files for testing
-│   ├── index.html                # Test homepage
-│   ├── chat-demo.html            # Chat interface demo
-│   └── chat-upload-test.html     # Upload test page
+├── 📂 diagrams/                     # PlantUML architectural diagrams
+│   ├── 📂 architecture_diagrams/    # System architecture views
+│   ├── 📂 database_diagrams/        # Database design
+│   └── 📂 workflow_diagrams/        # Runtime behavior
 │
-├── diagrams/                     # PlantUML architectural diagrams
-│   ├── architecture_diagrams/    # System architecture views
-│   ├── database_diagrams/        # Database design
-│   └── workflow_diagrams/        # Runtime behavior
+├── 📂 tasks/                        # Team task distribution (5 members)
+
 │
-├── tasks/                        # Team task distribution
+├── 📂 tests/                        # Test suites
+│   ├── 📂 client/                   # Frontend tests
+│   ├── 📂 server/                   # Backend tests
+│   └── 📂 integration/              # Integration tests
 │
-├── tests/                        # Test suites
-│   ├── client/                   # Frontend tests
-│   ├── server/                   # Backend tests
-│   └── integration/              # Integration tests
-│
-└── Requirement_EN.md             # Project requirements
+└── 📋 Requirement_EN.md             # Project requirements
 ```
 
 ## Architecture Highlights
@@ -121,46 +114,100 @@ See detailed task breakdown in the [`tasks/`](tasks/) folder.
 
 ## Getting Started
 
-### Installation
+### Quick Start with Docker (Recommended)
+
 ```bash
-# Clone repository
+# 1. Clone repository
 git clone https://github.com/NguyenTranPhuoc/SoftwareArchitecture_Project.git
 cd SoftwareArchitecture_Project
 
-# Install dependencies (when available)
+# 2. Install dependencies
 npm install
 
-# Setup environment variables
+# 3. Setup environment variables (already configured for Docker)
 cp .env.example .env
 
-# Start development server
-npm run dev
+# 4. Start all databases with Docker
+docker-compose up -d
+
+# 5. Build and start the server
+npm run build:server
+npm run start:server
 ```
+
+**Server running at**: http://localhost:5000
+
+**Database UIs**:
+- PostgreSQL Admin: http://localhost:5050 (admin@zalo.com / admin123)
+- MongoDB Express: http://localhost:8081 (admin / admin123)
+- RedisInsight: http://localhost:8001
+
+### Manual Setup
+
+If you prefer manual installation without Docker, see **[SETUP_GUIDE.md](SETUP_GUIDE.md)** for detailed instructions.
+
+## Available Scripts
+
+```bash
+# Backend Development
+npm run dev:server          # Start dev server with hot reload
+npm run build:server        # Build TypeScript to JavaScript
+npm run start:server        # Start production server
+
+# Frontend Development
+npm run dev:client          # Start React development server
+
+# Testing & Quality
+npm test                    # Run tests
+npm run lint                # Run linter
+```
+
+## Test Users
+
+The database is pre-populated with test users (password: `password123`):
+- alice@example.com
+- bob@example.com
+- charlie@example.com
+- nhan@example.com
 
 ## Documentation
 
-### Deployment and DevOps
-- **[GCP Setup Guide](docs/GCP_SETUP_GUIDE.md)** - Deploy to Google Cloud Platform
-- **[Deployment Fix](docs/DEPLOYMENT_FIX.md)** - Deployment troubleshooting
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[DevOps Action Plan](docs/DEVOPS_ACTION_PLAN.md)** - DevOps tasks
+### Setup & Deployment
+- 📘 **[Setup Guide](SETUP_GUIDE.md)** - Complete local development setup
+- 📗 **[GCP Setup Guide](GCP_SETUP_GUIDE.md)** - Google Cloud deployment
+- 📙 **[Claude AI Guide](CLAUDE.md)** - Project structure and guidelines
 
-### Chat Upload Feature
-- **[Chat Upload Guide](docs/CHAT_UPLOAD_GUIDE.md)** - File upload API documentation
-- **[Image Display Guide](docs/IMAGE_DISPLAY_GUIDE.md)** - Display images in chat
+### Implementation Details
+- 🔵 **[Nhan's Chat Service](NHAN_CHAT_SERVICE.md)** - Chat implementation with MongoDB & Redis
+- 🟢 **Huynh Nhu's User Management** - Coming soon
+- 🟡 **Frontend Implementation** - Coming soon
 
 ### Architecture
-- **[Architecture Justification](docs/architecture_docs/Architecture_Justification.md)** - Architecture decisions
+- **[Architecture Justification](docs/architecture_docs/Architecture_Justification.md)** - Design decisions
+- **[Requirements](Requirement_EN.md)** - Functional and non-functional requirements
 
-### Requirements
-- **[Requirements (English)](Requirement_EN.md)** - Project requirements
+## API Endpoints
 
-## Demo and Testing
+Once the server is running, you can access:
 
-**Live Server**: http://34.124.227.173:5000
+- **Health Check**: `GET /health`
+- **API Info**: `GET /api`
+- **Conversations**: `POST/GET /api/conversations`
+- **Messages**: `POST/GET /api/messages`
 
-**Test Pages**:
-- Homepage: http://34.124.227.173:5000/
-- Chat Demo: http://34.124.227.173:5000/chat-demo.html
-- Upload Test: http://34.124.227.173:5000/chat-upload-test.html
+
+## Project Status
+
+✅ **Completed**:
+- Server infrastructure with Express + Socket.io
+- Multi-database setup (PostgreSQL, MongoDB, Redis)
+- Chat service with real-time messaging
+- Docker development environment
+- Database initialization scripts
+
+🚧 **In Progress**:
+- User authentication (Huynh Nhu)
+- Frontend web app (Quynh Nhu)
+- Mobile app (Manh)
+- GCP production deployment (Phuoc)
 
