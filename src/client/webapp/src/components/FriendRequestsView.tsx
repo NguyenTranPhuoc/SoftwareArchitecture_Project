@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type UserProfile } from "../store/chatStore";
+import friendApi, { type FriendRequest as ApiFriendRequest } from "../services/friendApi";
 
 // Types
 interface FriendRequest {
@@ -12,33 +13,44 @@ interface FriendRequest {
 
 // API functions
 async function fetchIncomingRequests(): Promise<FriendRequest[]> {
-  // TODO: Implement real API call when endpoint is ready
-  // For now, return empty array since you're a new user
-  return [];
+  try {
+    const requests = await friendApi.getPendingRequests();
+    
+    // Transform API response to match UI format
+    return requests.map(req => ({
+      id: req.friendship_id,
+      user: {
+        id: req.id,
+        name: req.full_name,
+        avatar: req.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.full_name)}&background=random`,
+        status: "offline" as const,
+      },
+      date: new Date().toISOString(), // API doesn't return date yet, use current
+      source: "Có thể bạn biết",
+      message: undefined,
+    }));
+  } catch (error) {
+    console.error("Error fetching incoming requests:", error);
+    return [];
+  }
 }
 
 async function fetchOutgoingRequests(): Promise<FriendRequest[]> {
-  // TODO: Implement real API call when endpoint is ready
-  // For now, return empty array since you're a new user
+  // Note: Backend doesn't have endpoint for outgoing requests yet
+  // This would require a new API endpoint or modifying the existing one
   return [];
 }
 
-async function acceptRequest(requestId: string): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  console.log("Accepting request:", requestId);
-  // TODO: Implement real API call when endpoint is ready
+async function acceptRequest(friendshipId: string): Promise<void> {
+  await friendApi.acceptFriendRequest(friendshipId);
 }
 
-async function declineRequest(requestId: string): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  console.log("Declining request:", requestId);
-  // TODO: Implement real API call when endpoint is ready
+async function declineRequest(friendshipId: string): Promise<void> {
+  await friendApi.rejectOrRemoveFriend(friendshipId);
 }
 
-async function withdrawRequest(requestId: string): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  console.log("Withdrawing request:", requestId);
-  // TODO: Implement real API call when endpoint is ready
+async function withdrawRequest(friendshipId: string): Promise<void> {
+  await friendApi.rejectOrRemoveFriend(friendshipId);
 }
 
 export default function FriendRequestsView() {
