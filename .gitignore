@@ -79,4 +79,7 @@ src/shared/types
 tests/client
 tests/integration
 tests/server
-scriptsconfig/*.json
+
+# GCP credentials
+config/*.json
+**/config/*.json
