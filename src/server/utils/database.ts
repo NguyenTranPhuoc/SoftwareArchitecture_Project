@@ -45,13 +45,19 @@ export const connectRedis = async (): Promise<RedisClientType> => {
   }
 
   try {
-    redisClient = createClient({
-      socket: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-      },
-      password: process.env.REDIS_PASSWORD || undefined,
-    });
+    // Use REDIS_URL if available, otherwise construct from individual vars
+    const redisUrl = process.env.REDIS_URL;
+    if (redisUrl) {
+      redisClient = createClient({ url: redisUrl });
+    } else {
+      redisClient = createClient({
+        socket: {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+        },
+        password: process.env.REDIS_PASSWORD || undefined,
+      });
+    }
 
     redisClient.on('error', (err) => console.error('Redis Client Error:', err));
     redisClient.on('connect', () => console.log('✓ Redis connected successfully'));
