@@ -15,7 +15,7 @@ export const connectMongoDB = async (): Promise<Db> => {
   }
 
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/zalo_clone';
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/zalo_clone';
     mongoClient = new MongoClient(mongoUri, {
       serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
     });
