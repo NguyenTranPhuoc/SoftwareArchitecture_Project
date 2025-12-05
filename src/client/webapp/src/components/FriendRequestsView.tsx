@@ -27,8 +27,8 @@ async function fetchIncomingRequests(): Promise<FriendRequest[]> {
       id: req.friendship_id,
       user: {
         id: req.id,
-        name: req.full_name,
-        avatar: req.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.full_name)}&background=random`,
+        name: req.full_name || "Unknown User",
+        avatar: req.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.full_name || "U")}&background=random`,
         status: "offline" as const,
       },
       date: new Date().toISOString(), // API doesn't return date yet, use current
@@ -121,9 +121,11 @@ export default function FriendRequestsView() {
                 className="border border-slate-200 rounded-lg p-4"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold">
-                    {request.user.name.charAt(0)}
-                  </div>
+                  <img
+                    src={request.user.avatar}
+                    alt={request.user.name}
+                    className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                  />
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <div className="text-sm font-medium">
@@ -181,9 +183,11 @@ export default function FriendRequestsView() {
                 className="border border-slate-200 rounded-lg p-4"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold">
-                    {request.user.name.charAt(0)}
-                  </div>
+                  <img
+                    src={request.user.avatar}
+                    alt={request.user.name}
+                    className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                  />
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <div className="text-sm font-medium">
