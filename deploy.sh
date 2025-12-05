@@ -16,8 +16,8 @@ echo "VM IP: $VM_IP"
 # Stop existing services
 echo ""
 echo "[1/8] Stopping existing services..."
-docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
-cd src/auth-user-monorepo && docker-compose down 2>/dev/null || true
+docker compose -f docker-compose.prod.yml down 2>/dev/null || true
+cd src/auth-user-monorepo && docker compose down 2>/dev/null || true
 cd ../..
 
 # Pull latest code (if using git)
@@ -46,12 +46,12 @@ cd ../../..
 # Build Docker images
 echo ""
 echo "[5/8] Building Docker images..."
-docker-compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml build
 
 # Start main services
 echo ""
 echo "[6/8] Starting main services..."
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 
 # Wait for databases to be ready
 echo ""
@@ -62,7 +62,7 @@ sleep 10
 echo ""
 echo "[8/8] Starting auth services..."
 cd src/auth-user-monorepo
-docker-compose up -d
+docker compose up -d
 cd ../..
 
 # Show status
@@ -81,5 +81,5 @@ echo "  Auth:     http://$VM_IP:3001"
 echo "  User:     http://$VM_IP:3002"
 echo ""
 echo "Check logs with:"
-echo "  docker-compose -f docker-compose.prod.yml logs -f"
+echo "  docker compose -f docker-compose.prod.yml logs -f"
 echo ""
