@@ -35,4 +35,4 @@ COPY --from=builder /app/.env* ./
 EXPOSE 6000
 
 # Start server
-CMD ["node", "dist/server/index.js"]
+CMD ["node", "dist/index.js"]
