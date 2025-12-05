@@ -3,11 +3,13 @@ import { useChatStore } from "../store/chatStore";
 import SearchBar from "../components/SearchBar";
 import FriendList from "../components/FriendList";
 import FriendRequestsView from "../components/FriendRequestsView";
+import FriendsListView from "../components/FriendsListView";
+import AddFriendView from "../components/AddFriendView";
 import GroupsListView from "../components/GroupsListView";
 import RecentSearch from "../components/RecentSearch";
 import SearchResult from "../components/SearchResult";
 
-type ViewType = "friends" | "groups" | "friend-requests" | "group-invitations";
+type ViewType = "friends" | "groups" | "friend-requests" | "group-invitations" | "add-friend";
 
 export default function ContactsPage() {
   const [currentView, setCurrentView] = useState<ViewType>("friends");
@@ -43,6 +45,11 @@ export default function ContactsPage() {
       key: "friend-requests" as ViewType,
       label: "Lời mời kết bạn",
       icon: "👤",
+    },
+    {
+      key: "add-friend" as ViewType,
+      label: "Thêm bạn",
+      icon: "🔍",
     },
     {
       key: "group-invitations" as ViewType,
@@ -115,6 +122,8 @@ export default function ContactsPage() {
         return <GroupsListView />;
       case "friend-requests":
         return <FriendRequestsView />;
+      case "add-friend":
+        return <AddFriendView />;
       case "group-invitations":
         return (
           <div className="flex-1 flex items-center justify-center text-slate-500">
