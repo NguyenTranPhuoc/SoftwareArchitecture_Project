@@ -1,10 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import friendApi, { type FriendProfile } from "../services/friendApi";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useChatStore } from "../store/chatStore";
+import api from "../services/api";
 
 export default function FriendsListView() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+  const me = useChatStore((s) => s.me);
 
   // Fetch friends list
   const { data: friends = [], isLoading } = useQuery({
@@ -19,6 +24,29 @@ export default function FriendsListView() {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
     },
   });
+
+  // Create conversation mutation
+  const createChatMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      const response: any = await api.createConversation({
+        participants: [me.id, friendId],
+        type: 'direct',
+      });
+      return response.data;
+    },
+    onSuccess: (conversation: any) => {
+      // Navigate to the chat page with the new conversation
+      navigate(`/chat?conversation=${conversation._id}`);
+    },
+    onError: (error) => {
+      console.error("Failed to create conversation:", error);
+      alert("Không thể tạo cuộc trò chuyện. Vui lòng thử lại.");
+    },
+  });
+
+  const handleStartChat = async (friend: FriendProfile) => {
+    createChatMutation.mutate(friend.id);
+  };
 
   const handleRemoveFriend = (friend: FriendProfile) => {
     if (friend.friendship_id && confirm(`Bạn có chắc muốn xóa ${friend.full_name} khỏi danh sách bạn bè?`)) {
@@ -83,13 +111,11 @@ export default function FriendsListView() {
                     )}
                     <div className="flex gap-2 mt-3">
                       <button
-                        className="flex-1 px-3 py-1.5 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600"
-                        onClick={() => {
-                          // TODO: Open chat with friend
-                          console.log("Chat with:", friend.id);
-                        }}
+                        className="flex-1 px-3 py-1.5 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                        onClick={() => handleStartChat(friend)}
+                        disabled={createChatMutation.isPending}
                       >
-                        Nhắn tin
+                        {createChatMutation.isPending ? "Đang tạo..." : "Nhắn tin"}
                       </button>
                       <button
                         className="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs rounded-lg hover:bg-slate-200"
