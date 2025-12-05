@@ -22,25 +22,11 @@ export default function ProfilePage() {
       setLoading(true);
       setError("");
       
-      try {
-        const data = await userApi.getProfile(me.id);
-        setProfile(data);
-        setFullName(data.full_name || "");
-        setDateOfBirth(data.date_of_birth || "");
-      } catch (apiError) {
-        console.warn("API getProfile failed, using mock data:", apiError);
-        // Fallback to mock profile
-        const mockProfile: UserProfile = {
-          id: me.id,
-          email: (JSON.parse(localStorage.getItem('user') || '{}')).email || 'user@example.com',
-          full_name: me.displayName,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        setProfile(mockProfile);
-        setFullName(mockProfile.full_name || "");
-        setDateOfBirth(mockProfile.date_of_birth || "");
-      }
+      const data = await userApi.getProfile(me.id);
+      setProfile(data);
+      setFullName(data.full_name || "");
+      // Convert ISO date to YYYY-MM-DD format for input[type="date"]
+      setDateOfBirth(data.date_of_birth ? data.date_of_birth.split('T')[0] : "");
     } catch (err: any) {
       setError(err.message || "Không thể tải thông tin");
       console.error("Error loading profile:", err);
@@ -53,39 +39,26 @@ export default function ProfilePage() {
     try {
       setError("");
       
-      // For now, update locally since user service might not be fully configured
-      const updatedProfile = {
-        ...profile!,
-        full_name: fullName,
-        date_of_birth: dateOfBirth,
-        updated_at: new Date().toISOString()
-      };
-      
-      try {
-        // Try to update via API
-        const updated = await userApi.updateProfile(me.id, {
-          full_name: fullName,
-          date_of_birth: dateOfBirth,
-        });
-        setProfile(updated);
-      } catch (apiError) {
-        console.warn("API update failed, using local update:", apiError);
-        // Fallback to local update
-        setProfile(updatedProfile);
-        
-        // Update localStorage user info
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          user.displayName = fullName || user.displayName;
-          localStorage.setItem('user', JSON.stringify(user));
-        }
+      // Prepare update data - only include non-empty fields
+      const updateData: any = {};
+      if (fullName && fullName.trim()) {
+        updateData.full_name = fullName.trim();
+      }
+      if (dateOfBirth && dateOfBirth.trim()) {
+        // Convert date to ISO8601 format (YYYY-MM-DD → ISO string)
+        updateData.date_of_birth = new Date(dateOfBirth).toISOString();
       }
       
+      // Try to update via API
+      const updated = await userApi.updateProfile(me.id, updateData);
+      setProfile(updated);
+      setFullName(updated.full_name || "");
+      setDateOfBirth(updated.date_of_birth ? updated.date_of_birth.split('T')[0] : "");
       setIsEditing(false);
       alert("Cập nhật thành công!");
     } catch (err: any) {
       setError(err.message || "Cập nhật thất bại");
+      console.error("Update error:", err);
     }
   };
 
