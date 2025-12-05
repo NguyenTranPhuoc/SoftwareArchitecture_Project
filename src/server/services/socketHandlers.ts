@@ -286,9 +286,10 @@ export function setupSocketHandlers(io: Server) {
         const onlineUsers: string[] = [];
 
         for (const participantId of conversation.participants) {
-          const isOnline = await redis.exists(`${ONLINE_USERS_PREFIX}${participantId}`);
+          const participantIdStr = participantId.toString();
+          const isOnline = await redis.exists(`${ONLINE_USERS_PREFIX}${participantIdStr}`);
           if (isOnline === 1) {
-            onlineUsers.push(participantId);
+            onlineUsers.push(participantIdStr);
           }
         }
 

@@ -1,6 +1,7 @@
 import conversationModel, { IConversation } from '../models/conversationModel';
 import messageModel, { IMessage } from '../models/messageModel';
 import { getRedisClient } from '../utils/database';
+import mongoose from 'mongoose';
 
 export class ChatService {
   private readonly CONVERSATION_CACHE_PREFIX = 'conversation:';
@@ -30,11 +31,11 @@ export class ChatService {
     }
 
     const conversation = await conversationModel.createConversation({
-      participants,
+      participants: participants.map(id => new mongoose.Types.ObjectId(id)),
       type,
       name,
       avatar,
-      createdBy,
+      createdBy: new mongoose.Types.ObjectId(createdBy),
     });
 
     // Cache the new conversation
