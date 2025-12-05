@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import api from "../services/api";
 
 export type MessageType = "text" | "image" | "file" | "video" | "sticker";
 
@@ -68,19 +69,30 @@ interface ChatState {
   conversations: Conversation[];
   messages: Message[];
   selectedConversationId?: string;
+  isLoading: boolean;
+  error: string | null;
+
+  // Initialization
+  initialize: () => Promise<void>;
+  loadConversations: () => Promise<void>;
+  loadMessages: (conversationId: string) => Promise<void>;
+
+  // UI State
   selectConversation: (id: string) => void;
   isInfoPanelOpen: boolean;
   toggleInfoPanel: () => void;
-  sendMessage: (conversationId: string, content: string) => void;
+
+  // Messaging
+  sendMessage: (conversationId: string, content: string) => Promise<void>;
   sendFileMessage: (
     conversationId: string,
     file: File,
-    type: "image" | "file",
+    type: "image" | "file" | "video",
     sendWSMessage?: (payload: {
       type: "message:send:file";
       conversationId: string;
       content: string;
-      messageType: "image" | "file";
+      messageType: "image" | "file" | "video";
       fileMetadata: {
         filename: string;
         size: number;
@@ -97,10 +109,14 @@ interface ChatState {
     thumbnailUrl?: string
   ) => void;
   receiveMessage: (msg: Message) => void;
+
+  // Conversations
   startDirectConversation: (user: UserProfile) => void;
-  createGroup: (name: string, members: UserProfile[]) => void;
+  createGroup: (name: string, members: UserProfile[]) => Promise<void>;
   addMembers: (conversationId: string, members: UserProfile[]) => void;
   removeMember: (conversationId: string, memberId: string) => void;
+
+  // Group Management
   setMemberRole: (
     conversationId: string,
     memberId: string,
@@ -109,9 +125,11 @@ interface ChatState {
   transferOwnership: (conversationId: string, newOwnerId: string) => void;
   getMemberRole: (conversationId: string, memberId: string) => MemberRole;
   isGroupOwner: (conversationId: string) => boolean;
+
+  // Message Actions
   recallMessage: (messageId: string) => void;
   deleteMessageForMe: (messageId: string) => void;
-  addReaction: (messageId: string, emoji: string) => void;
+  addReaction: (messageId: string, emoji: string) => Promise<void>;
   sendReply: (conversationId: string, content: string, replyToMessageId: string) => void;
 }
 
@@ -144,45 +162,11 @@ const mockFriends: UserProfile[] = [
   },
 ];
 
-const mockConversations: Conversation[] = [
-  {
-    id: "674612345678901234abcde1",
-    name: "UAV Pilots Club",
-    type: "group",
-    lastMessagePreview: "Z chủ nhật này anh hẹn...",
-    unreadCount: 2,
-    isPinned: true,
-    members: [me, mockFriends[0], mockFriends[1]],
-  },
-  {
-    id: "674612345678901234abcde2",
-    name: "Thành Trung",
-    type: "direct",
-    lastMessagePreview: "Zalo chỉ hiển thị tin nhắn từ...",
-    unreadCount: 0,
-    members: [me, mockFriends[0]],
-  },
-];
+// Mock conversations - will be replaced by API data
+const mockConversations: Conversation[] = [];
 
-const mockMessages: Message[] = [
-  {
-    id: "674612345678901234000001",
-    conversationId: "674612345678901234abcde1",
-    senderId: "674612345678901234567891",
-    content: "@Minh Anh Lê Đỗ e xin tuần sau...",
-    type: "text",
-    createdAt: "2025-11-15T11:31:00",
-  },
-  {
-    id: "674612345678901234000002",
-    conversationId: "674612345678901234abcde1",
-    senderId: "674612345678901234567890",
-    content: "Ok nè 😊",
-    type: "text",
-    createdAt: "2025-11-15T11:35:00",
-    isOwn: true,
-  },
-];
+// Mock messages - will be replaced by API data
+const mockMessages: Message[] = [];
 
 // File validation constants
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -248,10 +232,9 @@ export function validateFile(
   if (!allowedTypes.includes(file.type)) {
     return {
       valid: false,
-      error: `Định dạng file không được hỗ trợ. ${
-        type === "image" ? "Chỉ chấp nhận JPEG, PNG, GIF, WebP." :
+      error: `Định dạng file không được hỗ trợ. ${type === "image" ? "Chỉ chấp nhận JPEG, PNG, GIF, WebP." :
         type === "video" ? "Chỉ chấp nhận MP4, WebM, OGG." : ""
-      }`,
+        }`,
     };
   }
 
@@ -265,67 +248,205 @@ export function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-// Simulate file upload with progress
-async function simulateFileUpload(
+// Upload file to server (GCS) with progress tracking
+async function uploadFileToServer(
   file: File,
+  type: 'image' | 'video' | 'file',
   onProgress: (progress: number) => void
-): Promise<{ url: string; thumbnailUrl?: string }> {
-  return new Promise((resolve) => {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 15;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
+): Promise<{ url: string; thumbnailUrl?: string; filename: string; size: number; mimeType: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
 
-        // Create object URL for the file (simulating server URL)
-        const url = URL.createObjectURL(file);
+  // Determine endpoint based on type
+  let endpoint = '/api/upload/file';
+  if (type === 'image') endpoint = '/api/upload/image';
+  else if (type === 'video') endpoint = '/api/upload/video';
 
-        // For images, create thumbnail
-        let thumbnailUrl: string | undefined;
-        if (file.type.startsWith("image/")) {
-          thumbnailUrl = url; // In real app, this would be a separate thumbnail URL
-        }
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
 
-        resolve({ url, thumbnailUrl });
-      } else {
+    // Track upload progress
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const progress = (e.loaded / e.total) * 100;
         onProgress(progress);
       }
-    }, 100);
+    });
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status === 200) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          if (response.success) {
+            resolve({
+              url: response.url,
+              thumbnailUrl: response.thumbnailUrl || response.url,
+              filename: response.filename,
+              size: response.size,
+              mimeType: response.mimeType,
+            });
+          } else {
+            reject(new Error(response.error || 'Upload failed'));
+          }
+        } catch (error) {
+          reject(new Error('Invalid response from server'));
+        }
+      } else {
+        reject(new Error(`Upload failed with status ${xhr.status}`));
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      reject(new Error('Network error during upload'));
+    });
+
+    xhr.addEventListener('abort', () => {
+      reject(new Error('Upload cancelled'));
+    });
+
+    // Get API URL from environment or use default
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    xhr.open('POST', `${API_URL}${endpoint}`);
+    xhr.send(formData);
   });
 }
 
-export const useChatStore = create<ChatState>((set) => ({
+export const useChatStore = create<ChatState>((set, get) => ({
   me,
   conversations: mockConversations,
   messages: mockMessages,
   selectedConversationId: "",
-  selectConversation: (id: string) => set({ selectedConversationId: id }),
-  isInfoPanelOpen: false,
+  isLoading: false,
+  error: null,
 
+  // Initialize the store with data from backend
+  initialize: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      await get().loadConversations();
+      set({ isLoading: false });
+    } catch (error) {
+      console.error('[Store] Initialization failed:', error);
+      set({ isLoading: false, error: 'Failed to load data' });
+    }
+  },
+
+  // Load conversations from API
+  loadConversations: async () => {
+    try {
+      const data: any = await api.getConversations(me.id);
+      const conversations: Conversation[] = (data || []).map((conv: any) => ({
+        id: conv._id?.toString() || conv.id,
+        name: conv.name || 'Unnamed',
+        type: conv.type || 'direct',
+        lastMessagePreview: conv.lastMessage?.content || '',
+        unreadCount: 0,
+        isPinned: conv.isPinned || false,
+        isMuted: conv.isMuted || false,
+        members: [], // Will be populated if needed
+        memberRoles: conv.memberRoles || {},
+      }));
+      set({ conversations });
+    } catch (error) {
+      console.error('[Store] Failed to load conversations:', error);
+      throw error;
+    }
+  },
+
+  // Load messages for a conversation from API
+  loadMessages: async (conversationId: string) => {
+    try {
+      const data: any = await api.getMessages(conversationId, 50, 0);
+      const messages: Message[] = (data || []).map((msg: any) => ({
+        id: msg._id?.toString() || msg.id,
+        conversationId: msg.conversationId?.toString() || conversationId,
+        senderId: msg.senderId?.toString() || msg.senderId,
+        content: msg.content,
+        type: msg.type || 'text',
+        createdAt: msg.createdAt,
+        isOwn: (msg.senderId?.toString() || msg.senderId) === me.id,
+        replyTo: msg.replyTo?.toString(),
+        reactions: msg.reactions || [],
+        fileMetadata: msg.fileUrl ? {
+          filename: msg.fileName || 'file',
+          size: msg.fileSize || 0,
+          mimeType: msg.type === 'image' ? 'image/jpeg' : 'application/octet-stream',
+          url: msg.fileUrl,
+          isOnCloud: true,
+        } : undefined,
+      }));
+      set({ messages });
+    } catch (error) {
+      console.error('[Store] Failed to load messages:', error);
+      throw error;
+    }
+  },
+
+  selectConversation: async (id: string) => {
+    set({ selectedConversationId: id });
+    // Load messages when conversation is selected
+    try {
+      await get().loadMessages(id);
+    } catch (error) {
+      console.error('[Store] Failed to load messages for conversation:', error);
+    }
+  },
+
+  isInfoPanelOpen: false,
   toggleInfoPanel: () => set((s) => ({ isInfoPanelOpen: !s.isInfoPanelOpen })),
 
-  sendMessage: (conversationId, content) =>
-    set((state) => {
-      const newMsg: Message = {
-        id: crypto.randomUUID(),
-        conversationId,
-        senderId: state.me.id,
-        content,
-        type: "text",
-        createdAt: new Date().toISOString(),
-        isOwn: true,
-      };
+  // Send message with API integration
+  sendMessage: async (conversationId, content) => {
+    const tempId = crypto.randomUUID();
+    const newMsg: Message = {
+      id: tempId,
+      conversationId,
+      senderId: get().me.id,
+      content,
+      type: "text",
+      createdAt: new Date().toISOString(),
+      isOwn: true,
+    };
 
-      return {
-        messages: [...state.messages, newMsg],
-        conversations: state.conversations.map((c) =>
-          c.id === conversationId
-            ? { ...c, lastMessagePreview: content, unreadCount: 0 }
-            : c
+    // Optimistic update
+    set((state) => ({
+      messages: [...state.messages, newMsg],
+      conversations: state.conversations.map((c) =>
+        c.id === conversationId
+          ? { ...c, lastMessagePreview: content, unreadCount: 0 }
+          : c
+      ),
+    }));
+
+    try {
+      // Send to backend
+      const savedMessage: any = await api.sendMessage({
+        conversationId,
+        senderId: get().me.id,
+        content,
+        type: 'text',
+      });
+
+      // Update with server response
+      set((state) => ({
+        messages: state.messages.map((m) =>
+          m.id === tempId
+            ? {
+              ...m,
+              id: savedMessage._id?.toString() || savedMessage.id,
+              createdAt: savedMessage.createdAt,
+            }
+            : m
         ),
-      };
-    }),
+      }));
+    } catch (error) {
+      console.error('[Store] Failed to send message:', error);
+      // Remove optimistic message on error
+      set((state) => ({
+        messages: state.messages.filter((m) => m.id !== tempId),
+      }));
+    }
+  },
 
   sendFileMessage: async (conversationId, file, type, sendWSMessage) => {
     const messageId = crypto.randomUUID();
@@ -356,55 +477,61 @@ export const useChatStore = create<ChatState>((set) => ({
       conversations: state.conversations.map((c) =>
         c.id === conversationId
           ? {
-              ...c,
-              lastMessagePreview:
-                type === "image" ? "📷 Đã gửi ảnh" : `📎 ${file.name}`,
-              unreadCount: 0,
-            }
+            ...c,
+            lastMessagePreview:
+              type === "image" ? "📷 Đã gửi ảnh" : `📎 ${file.name}`,
+            unreadCount: 0,
+          }
           : c
       ),
     }));
 
-    // Simulate upload with progress
+    // Upload to GCS with progress
     try {
-      const { url, thumbnailUrl } = await simulateFileUpload(
+      // Determine upload type
+      const uploadType: 'image' | 'video' | 'file' =
+        type === 'image' ? 'image' :
+          type === 'video' ? 'video' : 'file';
+
+      const result = await uploadFileToServer(
         file,
-        (progress) => {
+        uploadType,
+        (progress: number) => {
           useChatStore
             .getState()
             .updateMessageUploadProgress(messageId, progress);
         }
       );
 
-      // Generate thumbnail for images
-      let finalThumbnailUrl = thumbnailUrl;
-      if (type === "image" && !finalThumbnailUrl) {
-        finalThumbnailUrl = URL.createObjectURL(file);
-      }
-
+      // Complete upload with GCS URL
       useChatStore
         .getState()
-        .completeMessageUpload(messageId, url, finalThumbnailUrl);
+        .completeMessageUpload(messageId, result.url, result.thumbnailUrl);
 
       // Send message to server via WebSocket
       if (sendWSMessage) {
         sendWSMessage({
           type: "message:send:file",
           conversationId,
-          content: type === "image" ? "📷" : "📎",
+          content: type === "image" ? "📷" : type === "video" ? "🎥" : "📎",
           messageType: type,
           fileMetadata: {
-            filename: file.name,
-            size: file.size,
-            mimeType: file.type,
-            url,
-            thumbnailUrl: finalThumbnailUrl,
+            filename: result.filename,
+            size: result.size,
+            mimeType: result.mimeType,
+            url: result.url,
+            thumbnailUrl: result.thumbnailUrl,
           },
         });
       }
     } catch (error) {
       console.error("Upload failed:", error);
-      // Handle error - could update message to show error state
+      // Show error to user
+      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Remove failed message
+      set((state) => ({
+        messages: state.messages.filter(m => m.id !== messageId),
+      }));
     }
   },
 
@@ -413,9 +540,9 @@ export const useChatStore = create<ChatState>((set) => ({
       messages: state.messages.map((m) =>
         m.id === messageId && m.fileMetadata
           ? {
-              ...m,
-              fileMetadata: { ...m.fileMetadata, uploadProgress: progress },
-            }
+            ...m,
+            fileMetadata: { ...m.fileMetadata, uploadProgress: progress },
+          }
           : m
       ),
     })),
@@ -425,16 +552,16 @@ export const useChatStore = create<ChatState>((set) => ({
       messages: state.messages.map((m) =>
         m.id === messageId && m.fileMetadata
           ? {
-              ...m,
-              fileMetadata: {
-                ...m.fileMetadata,
-                url,
-                thumbnailUrl,
-                uploadProgress: 100,
-                isUploading: false,
-                isOnCloud: true,
-              },
-            }
+            ...m,
+            fileMetadata: {
+              ...m.fileMetadata,
+              url,
+              thumbnailUrl,
+              uploadProgress: 100,
+              isUploading: false,
+              isOnCloud: true,
+            },
+          }
           : m
       ),
     })),
@@ -516,48 +643,43 @@ export const useChatStore = create<ChatState>((set) => ({
       };
     }),
 
-  createGroup: (name, members) =>
-    set((state) => {
-      // Create group conversation with current user + selected members
-      const allMembers = [state.me, ...members];
+  createGroup: async (name, members) => {
+    const allMembers = [get().me, ...members];
+    const participantIds = allMembers.map(m => m.id);
 
-      // Initialize member roles: current user is owner, others are members
-      const memberRoles: Record<string, MemberRole> = {
-        [state.me.id]: "owner",
-      };
-      members.forEach((m) => {
-        memberRoles[m.id] = "member";
+    try {
+      // Call API to create group
+      const newGroup: any = await api.createConversation({
+        participants: participantIds,
+        type: 'group',
+        name: name.trim() || `Nhóm ${allMembers.length} người`,
       });
 
-      const newGroup: Conversation = {
-        id: crypto.randomUUID(),
-        name: name.trim() || `Nhóm ${allMembers.length} người`,
-        type: "group",
-        lastMessagePreview: "",
+      const groupConv: Conversation = {
+        id: newGroup._id?.toString() || newGroup.id,
+        name: newGroup.name,
+        type: 'group',
+        lastMessagePreview: '',
         unreadCount: 0,
         members: allMembers,
-        memberRoles,
+        memberRoles: {
+          [get().me.id]: 'owner',
+          ...Object.fromEntries(members.map(m => [m.id, 'member' as MemberRole])),
+        },
       };
 
-      // Create a system message for group creation
-      const systemMessage: Message = {
-        id: crypto.randomUUID(),
-        conversationId: newGroup.id,
-        senderId: state.me.id,
-        content: `${members
-          .map((m) => m.displayName)
-          .join(", ")} được bạn thêm vào nhóm`,
-        type: "text",
-        createdAt: new Date().toISOString(),
-        isOwn: true,
-      };
+      set((state) => ({
+        conversations: [groupConv, ...state.conversations],
+        selectedConversationId: groupConv.id,
+      }));
 
-      return {
-        conversations: [newGroup, ...state.conversations],
-        selectedConversationId: newGroup.id,
-        messages: [...state.messages, systemMessage],
-      };
-    }),
+      // Load messages for the new conversation
+      await get().loadMessages(groupConv.id);
+    } catch (error) {
+      console.error('[Store] Failed to create group:', error);
+      throw error;
+    }
+  },
 
   addMembers: (conversationId, newMembers) =>
     set((state) => {
@@ -595,10 +717,10 @@ export const useChatStore = create<ChatState>((set) => ({
         conversations: state.conversations.map((c) =>
           c.id === conversationId
             ? {
-                ...c,
-                members: [...c.members, ...membersToAdd],
-                memberRoles: updatedMemberRoles,
-              }
+              ...c,
+              members: [...c.members, ...membersToAdd],
+              memberRoles: updatedMemberRoles,
+            }
             : c
         ),
         messages: [...state.messages, systemMessage],
@@ -632,10 +754,10 @@ export const useChatStore = create<ChatState>((set) => ({
         conversations: state.conversations.map((c) =>
           c.id === conversationId
             ? {
-                ...c,
-                members: c.members.filter((m) => m.id !== memberId),
-                memberRoles: updatedMemberRoles,
-              }
+              ...c,
+              members: c.members.filter((m) => m.id !== memberId),
+              memberRoles: updatedMemberRoles,
+            }
             : c
         ),
         messages: [...state.messages, systemMessage],
@@ -708,36 +830,67 @@ export const useChatStore = create<ChatState>((set) => ({
       ),
     })),
 
-  addReaction: (messageId, emoji) =>
-    set((state) => ({
-      messages: state.messages.map((m) => {
-        if (m.id !== messageId) return m;
-        const existingReactions = m.reactions || [];
-        // Check if user already reacted with this emoji
-        const userReactionIndex = existingReactions.findIndex(
-          (r) => r.userId === state.me.id && r.emoji === emoji
-        );
-        if (userReactionIndex >= 0) {
-          // Remove reaction if already exists
-          return {
-            ...m,
-            reactions: existingReactions.filter((_, i) => i !== userReactionIndex),
-          };
-        }
-        // Add new reaction
-        return {
-          ...m,
-          reactions: [
-            ...existingReactions,
-            {
-              emoji,
-              userId: state.me.id,
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        };
-      }),
-    })),
+  addReaction: async (messageId, emoji) => {
+    const state = get();
+    const message = state.messages.find(m => m.id === messageId);
+    if (!message) return;
+
+    const existingReactions = message.reactions || [];
+    const userReactionIndex = existingReactions.findIndex(
+      (r) => r.userId === state.me.id && r.emoji === emoji
+    );
+
+    // Optimistic update
+    if (userReactionIndex >= 0) {
+      // Remove reaction
+      set((state) => ({
+        messages: state.messages.map((m) =>
+          m.id === messageId
+            ? { ...m, reactions: m.reactions?.filter((_, i) => i !== userReactionIndex) }
+            : m
+        ),
+      }));
+
+      try {
+        await api.removeReaction(messageId, emoji, state.me.id);
+      } catch (error) {
+        console.error('[Store] Failed to remove reaction:', error);
+        // Rollback
+        set((state) => ({
+          messages: state.messages.map((m) =>
+            m.id === messageId ? { ...m, reactions: existingReactions } : m
+          ),
+        }));
+      }
+    } else {
+      // Add reaction
+      const newReaction = {
+        emoji,
+        userId: state.me.id,
+        createdAt: new Date().toISOString(),
+      };
+
+      set((state) => ({
+        messages: state.messages.map((m) =>
+          m.id === messageId
+            ? { ...m, reactions: [...(m.reactions || []), newReaction] }
+            : m
+        ),
+      }));
+
+      try {
+        await api.addReaction(messageId, emoji, state.me.id);
+      } catch (error) {
+        console.error('[Store] Failed to add reaction:', error);
+        // Rollback
+        set((state) => ({
+          messages: state.messages.map((m) =>
+            m.id === messageId ? { ...m, reactions: existingReactions } : m
+          ),
+        }));
+      }
+    }
+  },
 
   sendReply: (conversationId, content, replyToMessageId) =>
     set((state) => {

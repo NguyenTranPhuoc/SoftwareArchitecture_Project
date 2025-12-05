@@ -1,6 +1,9 @@
 // API service for making HTTP requests to the backend
 const API_BASE_URL = '/api';
 
+// Enable debug logging
+const DEBUG = true;
+
 interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -8,31 +11,78 @@ interface ApiResponse<T> {
   message?: string;
 }
 
+// Export interfaces for type safety
+export interface ConversationData {
+  _id?: string;
+  id?: string;
+  participants: string[];
+  type: 'direct' | 'group';
+  name?: string;
+  avatar?: string;
+  lastMessage?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MessageData {
+  _id?: string;
+  id?: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  type?: 'text' | 'image' | 'file';
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  replyTo?: string;
+  createdAt?: string;
+  reactions?: Array<{ emoji: string; userId: string; createdAt: string }>;
+}
+
 class ApiService {
+  private log(method: string, endpoint: string, data?: any) {
+    if (DEBUG) {
+      console.log(`[API] ${method} ${endpoint}`, data || '');
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
+    const method = options.method || 'GET';
+    
+    this.log(method, endpoint, options.body);
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Network error' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ 
+          error: `HTTP ${response.status}: ${response.statusText}` 
+        }));
+        throw new Error(error.error || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success === false) {
+        throw new Error(data.error || 'API request failed');
+      }
+
+      this.log(method, endpoint, `✓ Success`);
+      return data.data || data;
+    } catch (error) {
+      console.error(`[API Error] ${method} ${endpoint}:`, error);
+      throw error;
     }
-
-    const data = await response.json();
-    if (data.success === false) {
-      throw new Error(data.error || 'API request failed');
-    }
-
-    return data.data || data;
   }
 
   // Conversations

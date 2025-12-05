@@ -64,6 +64,7 @@ app.get('/api', (req: Request, res: Response) => {
       friends: '/api/friends/*',
       conversations: '/api/conversations/*',
       messages: '/api/messages/*',
+      upload: '/api/upload/*',
     },
   });
 });
@@ -71,10 +72,12 @@ app.get('/api', (req: Request, res: Response) => {
 // Import route handlers
 import conversationRoutes from './routes/conversationRoutes';
 import messageRoutes from './routes/messageRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 
 // Register routes
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // TODO: Import and use remaining route handlers
 // import authRoutes from './routes/auth';
