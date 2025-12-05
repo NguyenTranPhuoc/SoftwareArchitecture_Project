@@ -21,7 +21,7 @@ const register = [
       await authService.createUser({ email, password, full_name });
       
       return res.status(201).json({ 
-        message: "Registration successful. Please check your email to verify your account." 
+        message: "Registration successful. You can now log in." 
       });
 
     } catch (error) {

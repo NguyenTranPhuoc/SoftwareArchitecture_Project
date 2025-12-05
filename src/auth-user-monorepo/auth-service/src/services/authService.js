@@ -17,13 +17,13 @@ const createUser = async ({ email, password, full_name }) => {
     password_hash,
     full_name,
     verification_token,
-    is_verified: false // Explicitly set to false
+    is_verified: true // Auto-verify for production without email setup
   });
 
-  // Send verification email
-  const emailService = require("./emailService");
-  emailService.sendVerificationEmail(user.email, user.verification_token)
-    .catch(console.error);
+  // Skip email sending for now
+  // const emailService = require("./emailService");
+  // emailService.sendVerificationEmail(user.email, user.verification_token)
+  //   .catch(console.error);
 
   return user;
 };
