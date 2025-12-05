@@ -14,7 +14,7 @@ COPY src/ ./src/
 COPY .env* ./
 
 # Build TypeScript
-RUN npm run build
+RUN npm run build:server
 
 # Production stage
 FROM node:18-alpine
