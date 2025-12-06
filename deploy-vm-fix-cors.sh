@@ -62,11 +62,9 @@ cat .env | grep CORS
 echo "Step 3: Running database migrations..."
 POSTGRES_CONTAINER=$(docker ps -qf "name=postgres")
 if [ -n "$POSTGRES_CONTAINER" ]; then
-  docker exec -i $POSTGRES_CONTAINER psql -U postgres -d zalo_auth_db <<EOF
-ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50) UNIQUE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code_expires TIMESTAMP;
-EOF
+  docker exec $POSTGRES_CONTAINER psql -U postgres -d zalo_auth_db -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50) UNIQUE;"
+  docker exec $POSTGRES_CONTAINER psql -U postgres -d zalo_auth_db -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6);"
+  docker exec $POSTGRES_CONTAINER psql -U postgres -d zalo_auth_db -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code_expires TIMESTAMP;"
   echo "✅ Database migrations complete"
 else
   echo "⚠️ PostgreSQL container not found, skipping migrations"
