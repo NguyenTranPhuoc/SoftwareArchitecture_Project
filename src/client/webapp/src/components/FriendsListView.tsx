@@ -27,15 +27,37 @@ export default function FriendsListView() {
 
   // Create conversation mutation
   const createChatMutation = useMutation({
-    mutationFn: async (friendId: string) => {
+    mutationFn: async (friend: FriendProfile) => {
       const conversation: any = await api.createConversation({
-        participants: [me.id, friendId],
+        participants: [me.id, friend.id],
         type: 'direct',
       });
-      return conversation; // api.request already unwraps the data
+      return { conversation, friend };
     },
-    onSuccess: (conversation: any) => {
-      // Navigate to the chat page with the new conversation
+    onSuccess: ({ conversation, friend }) => {
+      // Add conversation to chat store
+      const chatStore = useChatStore.getState();
+      const newConv = {
+        id: conversation._id,
+        name: friend.full_name,
+        type: 'direct' as const,
+        lastMessagePreview: '',
+        unreadCount: 0,
+        members: [
+          me,
+          {
+            id: friend.id,
+            displayName: friend.full_name,
+            avatarUrl: friend.avatar_url,
+          }
+        ],
+      };
+      
+      // Add to conversations and select it
+      chatStore.conversations.push(newConv);
+      chatStore.selectConversation(conversation._id);
+      
+      // Navigate to the chat page
       navigate(`/app/chats?conversation=${conversation._id}`);
     },
     onError: (error) => {
@@ -45,7 +67,7 @@ export default function FriendsListView() {
   });
 
   const handleStartChat = async (friend: FriendProfile) => {
-    createChatMutation.mutate(friend.id);
+    createChatMutation.mutate(friend);
   };
 
   const handleRemoveFriend = (friend: FriendProfile) => {
