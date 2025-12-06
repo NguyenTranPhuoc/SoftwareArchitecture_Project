@@ -72,14 +72,51 @@ export function useChatSocket() {
     });
 
     // Handle reactions
-    socket.on("reaction:added", (data: { messageId: string; emoji: string; userId: string }) => {
+    socket.on("reaction:added", (data: { messageId: string; emoji: string; userId: string; createdAt?: string }) => {
       console.log("Reaction added:", data);
-      // TODO: Add reaction to message in store
+      const { messages, setMessages } = useChatStore.getState();
+      const updatedMessages = messages.map((msg) => {
+        if (msg.id === data.messageId) {
+          const existingReactions = msg.reactions || [];
+          // Check if this user already has this reaction
+          const hasReaction = existingReactions.some(
+            (r) => r.userId === data.userId && r.emoji === data.emoji
+          );
+          if (!hasReaction) {
+            return {
+              ...msg,
+              reactions: [
+                ...existingReactions,
+                {
+                  emoji: data.emoji,
+                  userId: data.userId,
+                  createdAt: data.createdAt || new Date().toISOString(),
+                },
+              ],
+            };
+          }
+        }
+        return msg;
+      });
+      setMessages(updatedMessages);
     });
 
     socket.on("reaction:removed", (data: { messageId: string; emoji: string; userId: string }) => {
       console.log("Reaction removed:", data);
-      // TODO: Remove reaction from message in store
+      const { messages, setMessages } = useChatStore.getState();
+      const updatedMessages = messages.map((msg) => {
+        if (msg.id === data.messageId) {
+          const existingReactions = msg.reactions || [];
+          return {
+            ...msg,
+            reactions: existingReactions.filter(
+              (r) => !(r.userId === data.userId && r.emoji === data.emoji)
+            ),
+          };
+        }
+        return msg;
+      });
+      setMessages(updatedMessages);
     });
 
     // Handle typing indicators
