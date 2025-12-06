@@ -110,7 +110,7 @@ export default function MemberList({
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold relative">
-                    {member.displayName.charAt(0)}
+                    {(member.displayName || member.full_name || '?').charAt(0)}
                     {isMe && role === "owner" && (
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center text-[8px]">
                         🔒
@@ -119,7 +119,7 @@ export default function MemberList({
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-medium">
-                      {isMe ? "Bạn" : member.displayName}
+                      {isMe ? "Bạn" : (member.displayName || member.full_name)}
                     </div>
                     {role !== "member" && (
                       <div className="text-xs text-slate-500">

@@ -44,10 +44,10 @@ export default function OwnerDeputyManagement({
           <div className="p-4 border-b border-slate-200">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold">
-                {owner.displayName.charAt(0)}
+                {(owner.displayName || owner.full_name || '?').charAt(0)}
               </div>
               <div>
-                <div className="text-sm font-semibold">{owner.displayName}</div>
+                <div className="text-sm font-semibold">{owner.displayName || owner.full_name}</div>
                 <div className="text-xs text-slate-500">Trưởng nhóm</div>
               </div>
             </div>
