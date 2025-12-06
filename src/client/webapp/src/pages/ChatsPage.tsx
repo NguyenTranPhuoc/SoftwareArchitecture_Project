@@ -37,12 +37,18 @@ export default function ChatsPage() {
   // Load conversations from API on mount
   useEffect(() => {
     const loadConversations = async () => {
-      if (!me.id) return;
+      if (!me.id) {
+        console.log('[ChatsPage] Cannot load conversations - no user id');
+        return;
+      }
       
+      console.log('[ChatsPage] Loading conversations for user:', me.id);
       setIsLoadingConversations(true);
       try {
         const response: any = await api.getConversations(me.id);
+        console.log('[ChatsPage] API response:', response);
         const conversationsData = response.data || response;
+        console.log('[ChatsPage] Conversations data:', conversationsData);
         
         // Transform API response to match store format
         const formattedConversations = conversationsData.map((conv: any) => ({
@@ -58,7 +64,9 @@ export default function ChatsPage() {
         const existingConvIds = new Set(formattedConversations.map((c: any) => c.id));
         const newConversations = conversations.filter(c => !existingConvIds.has(c.id));
         
-        setConversations([...formattedConversations, ...newConversations]);
+        const finalConversations = [...formattedConversations, ...newConversations];
+        console.log('[ChatsPage] Setting conversations:', finalConversations.length, 'conversations');
+        setConversations(finalConversations);
         
         // Join all conversations via socket to receive real-time messages
         if (socketMethods) {
@@ -68,9 +76,10 @@ export default function ChatsPage() {
           });
         }
       } catch (error) {
-        console.error('Failed to load conversations:', error);
+        console.error('[ChatsPage] Failed to load conversations:', error);
       } finally {
         setIsLoadingConversations(false);
+        console.log('[ChatsPage] Finished loading conversations');
       }
     };
 
