@@ -1,88 +1,54 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useChatStore, type UserProfile } from "../store/chatStore";
-
-// Mock friends data (in real app, this would come from API)
-const MOCK_FRIENDS: UserProfile[] = [
-  {
-    id: "u1",
-    displayName: "Thành Trung",
-    phoneNumber: "0902344758",
-    isFriend: true,
-  },
-  {
-    id: "u2",
-    displayName: "Hoàng Đặng Trung Kiên",
-    phoneNumber: "0900000002",
-    isFriend: true,
-  },
-  {
-    id: "u3",
-    displayName: "UAV Pilots Club",
-    phoneNumber: "0900000003",
-    isFriend: true,
-  },
-  {
-    id: "u4",
-    displayName: "Phan Thị Chín",
-    phoneNumber: "0900000004",
-    isFriend: true,
-  },
-  {
-    id: "u5",
-    displayName: "Huỳnh Như",
-    phoneNumber: "0900000005",
-    isFriend: true,
-  },
-  {
-    id: "u6",
-    displayName: "Amyra Nguyễn",
-    phoneNumber: "0900000006",
-    isFriend: true,
-  },
-  {
-    id: "u7",
-    displayName: "Anh Thạch",
-    phoneNumber: "0900000007",
-    isFriend: true,
-  },
-  {
-    id: "u8",
-    displayName: "Anh Thư",
-    phoneNumber: "0900000008",
-    isFriend: true,
-  },
-  {
-    id: "u9",
-    displayName: "Anh Tuấn",
-    phoneNumber: "0900000009",
-    isFriend: true,
-  },
-  {
-    id: "u10",
-    displayName: "Ann",
-    phoneNumber: "0900000010",
-    isFriend: true,
-  },
-  {
-    id: "u11",
-    displayName: "Bách",
-    phoneNumber: "0900000011",
-    isFriend: true,
-  },
-];
-
-// Mock API to fetch friends list
-async function fetchFriends(): Promise<UserProfile[]> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  return MOCK_FRIENDS;
-}
+import {
+  useChatStore,
+  type UserProfile,
+  type MemberRole,
+} from "../store/chatStore";
+import friendApi, { type FriendProfile } from "../services/friendApi";
 
 interface CreateGroupModalProps {
   onClose: () => void;
   onSuccess: () => void;
 }
+
+const Mock_friends: FriendProfile[] = [
+  {
+    id: "1",
+    full_name: "John Doe",
+    email: "john.doe@example.com",
+    phone_number: "1234567890",
+    avatar_url: "https://via.placeholder.com/150",
+  },
+  {
+    id: "2",
+    full_name: "Jane Doe",
+    email: "jane.doe@example.com",
+    phone_number: "1234567891",
+    avatar_url: "https://via.placeholder.com/150",
+  },
+  {
+    id: "3",
+    full_name: "Jim Doe",
+    email: "jim.doe@example.com",
+    phone_number: "1234567892",
+    avatar_url: "https://via.placeholder.com/150",
+  },
+  {
+    id: "4",
+    full_name: "Jill Doe",
+    email: "jill.doe@example.com",
+    phone_number: "1234567893",
+    avatar_url: "https://via.placeholder.com/150",
+  },
+  {
+    id: "5",
+    full_name: "Jack Doe",
+    email: "jack.doe@example.com",
+    phone_number: "1234567894",
+    avatar_url: "https://via.placeholder.com/150",
+  },
+];
 
 export default function CreateGroupModal({
   onClose,
@@ -90,39 +56,39 @@ export default function CreateGroupModal({
 }: CreateGroupModalProps) {
   const [groupName, setGroupName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("Tất cả");
-  const [selectedMembers, setSelectedMembers] = useState<UserProfile[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<FriendProfile[]>([]);
   const createGroup = useChatStore((s) => s.createGroup);
 
-  // Fetch friends list using useQuery
+  // Fetch friends list
   const { data: friends = [], isLoading } = useQuery({
     queryKey: ["friends"],
-    queryFn: fetchFriends,
+    // queryFn: friendApi.getFriends,
+    queryFn: () => Mock_friends, // TODO: remove this
   });
 
   // Filter friends based on search query
   const filteredFriends = friends.filter((friend) => {
     const query = searchQuery.toLowerCase();
     return (
-      friend.displayName.toLowerCase().includes(query) ||
-      friend.phoneNumber?.includes(query)
+      friend.full_name.toLowerCase().includes(query) ||
+      friend.phone_number?.includes(query)
     );
   });
 
   // Group friends by first letter for display
   const groupedFriends = filteredFriends.reduce((acc, friend) => {
-    const firstLetter = friend.displayName.charAt(0).toUpperCase();
+    const firstLetter = friend.full_name.charAt(0).toUpperCase();
     if (!acc[firstLetter]) {
       acc[firstLetter] = [];
     }
     acc[firstLetter].push(friend);
     return acc;
-  }, {} as Record<string, UserProfile[]>);
+  }, {} as Record<string, FriendProfile[]>);
 
   const sortedGroups = Object.keys(groupedFriends).sort();
 
-  const handleToggleMember = (member: UserProfile) => {
-    setSelectedMembers((prev) => {
+  const handleToggleMember = (member: FriendProfile) => {
+    setSelectedMembers((prev: FriendProfile[]) => {
       const isSelected = prev.some((m) => m.id === member.id);
       if (isSelected) {
         return prev.filter((m) => m.id !== member.id);
@@ -140,7 +106,20 @@ export default function CreateGroupModal({
     if (selectedMembers.length < 2) return;
 
     const name = groupName.trim() || `Nhóm ${selectedMembers.length + 1} người`;
-    createGroup(name, selectedMembers);
+    createGroup(
+      name,
+      selectedMembers.map((member) => ({
+        id: member.id,
+        full_name: member.full_name,
+        email: member.email,
+        phone_number: member.phone_number,
+        avatar_url: member.avatar_url,
+        role: "member" as MemberRole,
+        displayName: member.full_name,
+        phoneNumber: member.phone_number,
+        isFriend: true,
+      }))
+    );
     onSuccess();
   };
 
@@ -188,34 +167,10 @@ export default function CreateGroupModal({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Nhập tên, số điện thoại, hoặc danh sách số điện thoại"
+                  placeholder="Nhập tên"
                   className="flex-1 bg-transparent text-sm outline-none"
                 />
               </div>
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="px-4 py-2 border-b border-slate-200 flex gap-2 overflow-x-auto">
-              {[
-                "Tất cả",
-                "Khách hàng",
-                "Gia đình",
-                "Công việc",
-                "Bạn bè",
-                "Trả lời sau",
-              ].map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setSelectedFilter(filter)}
-                  className={`px-3 py-1 rounded-full text-sm whitespace-nowrap ${
-                    selectedFilter === filter
-                      ? "bg-blue-500 text-white"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  }`}
-                >
-                  {filter}
-                </button>
-              ))}
             </div>
 
             {/* Contact List */}
@@ -230,47 +185,6 @@ export default function CreateGroupModal({
                 </div>
               ) : (
                 <>
-                  {/* Recent Chats Section */}
-                  {searchQuery === "" && (
-                    <div className="p-2">
-                      <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase">
-                        Trò chuyện gần đây
-                      </div>
-                      {friends.slice(0, 2).map((friend) => {
-                        const isSelected = selectedMembers.some(
-                          (m) => m.id === friend.id
-                        );
-                        return (
-                          <button
-                            key={friend.id}
-                            onClick={() => handleToggleMember(friend)}
-                            className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg"
-                          >
-                            <div className="w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold">
-                              {friend.displayName.charAt(0)}
-                            </div>
-                            <div className="flex-1 text-left">
-                              <div className="text-sm font-medium">
-                                {friend.displayName}
-                              </div>
-                            </div>
-                            <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                isSelected
-                                  ? "bg-blue-500 border-blue-500"
-                                  : "border-slate-300"
-                              }`}
-                            >
-                              {isSelected && (
-                                <span className="text-white text-xs">✓</span>
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
                   {/* Alphabetical Sections */}
                   {sortedGroups.map((letter) => (
                     <div key={letter} className="p-2">
@@ -288,11 +202,11 @@ export default function CreateGroupModal({
                             className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg"
                           >
                             <div className="w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold">
-                              {friend.displayName.charAt(0)}
+                              {friend.full_name.charAt(0)}
                             </div>
                             <div className="flex-1 text-left">
                               <div className="text-sm font-medium">
-                                {friend.displayName}
+                                {friend.full_name}
                               </div>
                             </div>
                             <div
@@ -324,16 +238,16 @@ export default function CreateGroupModal({
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
-              {selectedMembers.map((member) => (
+              {selectedMembers.map((member: FriendProfile) => (
                 <div
                   key={member.id}
                   className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50"
                 >
                   <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-xs font-semibold">
-                    {member.displayName.charAt(0)}
+                    {member.full_name.charAt(0)}
                   </div>
                   <div className="flex-1 text-sm truncate">
-                    {member.displayName}
+                    {member.full_name}
                   </div>
                   <button
                     onClick={() => handleRemoveMember(member.id)}
