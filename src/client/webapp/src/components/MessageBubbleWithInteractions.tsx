@@ -452,11 +452,9 @@ export default function MessageBubbleWithInteractions({
         </div>
 
         {/* Reactions */}
-        <div
-          className={`flex relative ${isOwn ? "justify-end" : "justify-start"}`}
-        >
-          {reactionCount > 0 && (
-            <div className="absolute flex items-center px-[6px] py-[2px] bg-white rounded-full border border-slate-200 shadow-sm w-fit bottom-[-18px] right-8">
+        {reactionCount > 0 && (
+          <div className={`flex mt-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+            <div className="flex items-center px-2 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
               {topReactions.map((emoji) => (
                 <span key={emoji} className="text-sm">
                   {emoji}
@@ -468,8 +466,8 @@ export default function MessageBubbleWithInteractions({
                 </span>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
