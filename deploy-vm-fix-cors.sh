@@ -60,17 +60,17 @@ cat .env | grep CORS
 
 # 3. Run database migration for phone verification
 echo "Step 3: Running database migrations..."
-docker exec -i $(docker ps -qf "name=postgres") psql -U postgres -d zalo_auth_db << 'EOSQL'
--- Add phone verification columns if they don't exist
+POSTGRES_CONTAINER=$(docker ps -qf "name=postgres")
+if [ -n "$POSTGRES_CONTAINER" ]; then
+  docker exec -i $POSTGRES_CONTAINER psql -U postgres -d zalo_auth_db <<EOF
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50) UNIQUE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code_expires TIMESTAMP;
-
--- Verify columns
-\d users
-EOSQL
-
-echo "✅ Database migrations complete"
+EOF
+  echo "✅ Database migrations complete"
+else
+  echo "⚠️ PostgreSQL container not found, skipping migrations"
+fi
 
 # 4. Restart auth-user services
 echo "Step 4: Restarting auth-user services..."
