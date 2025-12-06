@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useChatStore } from "../store/chatStore";
 import ConversationList from "../components/ConversationList";
 import ChatWindow from "../components/ChatWindow";
@@ -7,11 +8,31 @@ import RecentSearch from "../components/RecentSearch";
 import SearchResult from "../components/SearchResult";
 
 export default function ChatsPage() {
+  const [searchParams] = useSearchParams();
   const selectedId = useChatStore((s) => s.selectedConversationId);
+  const selectConversation = useChatStore((s) => s.selectConversation);
+  const conversations = useChatStore((s) => s.conversations);
   const isInfoPanelOpen = useChatStore((s) => s.isInfoPanelOpen);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Check for conversation parameter in URL and select it
+  useEffect(() => {
+    const conversationId = searchParams.get('conversation');
+    if (conversationId) {
+      // Check if conversation exists in store
+      const conversationExists = conversations.some(c => c.id === conversationId);
+      
+      if (conversationExists) {
+        selectConversation(conversationId);
+      } else {
+        // If conversation doesn't exist yet (newly created), still select it
+        // The ChatWindow component will handle loading the conversation details
+        selectConversation(conversationId);
+      }
+    }
+  }, [searchParams, selectConversation, conversations]);
 
   return (
     <div className="flex flex-1 h-full">
