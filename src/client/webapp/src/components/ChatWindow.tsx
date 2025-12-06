@@ -1,6 +1,6 @@
 // src/components/ChatWindow.tsx
 import { useChatStore, validateFile, type Message } from "../store/chatStore";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { AppOutletContext } from "../layouts/AppLayout";
 import MessageBubbleWithInteractions from "./MessageBubbleWithInteractions";
@@ -18,6 +18,8 @@ export default function ChatWindow() {
     recallMessage,
     deleteMessageForMe,
     addReaction,
+    typingUsers,
+    isUserOnline,
   } = useChatStore();
   const isInfoPanelOpen = useChatStore((s) => s.isInfoPanelOpen);
   const toggleInfoPanel = useChatStore((s) => s.toggleInfoPanel);
@@ -32,6 +34,8 @@ export default function ChatWindow() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -98,9 +102,18 @@ export default function ChatWindow() {
 
   const handleSend = () => {
     if (!text.trim()) return;
+    
+    // Stop typing indicator
+    if (isTypingRef.current && selectedConversationId) {
+      isTypingRef.current = false;
+      socketMethods.stopTyping(selectedConversationId);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    }
 
     if (replyingTo) {
-      // Send reply via Socket.IO
+      // Send reply
       socketMethods.sendMessage({
         conversationId: conv.id,
         content: text.trim(),
@@ -139,6 +152,53 @@ export default function ChatWindow() {
       handleSend();
     }
   };
+
+  // Handle typing indicator
+  const handleInputChange = useCallback((value: string) => {
+    setText(value);
+    
+    if (!selectedConversationId || !socketMethods) return;
+    
+    // Start typing if not already typing
+    if (!isTypingRef.current && value.length > 0) {
+      isTypingRef.current = true;
+      socketMethods.startTyping(selectedConversationId);
+    }
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Stop typing after 2 seconds of inactivity
+    if (value.length > 0) {
+      typingTimeoutRef.current = setTimeout(() => {
+        if (isTypingRef.current) {
+          isTypingRef.current = false;
+          socketMethods.stopTyping(selectedConversationId);
+        }
+      }, 2000);
+    } else {
+      // Stop immediately if text is cleared
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+        socketMethods.stopTyping(selectedConversationId);
+      }
+    }
+  }, [selectedConversationId, socketMethods]);
+
+  // Cleanup typing timeout on unmount or conversation change
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (isTypingRef.current && selectedConversationId && socketMethods) {
+        isTypingRef.current = false;
+        socketMethods.stopTyping(selectedConversationId);
+      }
+    };
+  }, [selectedConversationId, socketMethods]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -270,7 +330,13 @@ export default function ChatWindow() {
       {/* HEADER */}
       <div className="h-14 border-b border-slate-200 flex items-center px-4 justify-between bg-white">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-slate-300" />
+          <div className="relative">
+            <div className="w-8 h-8 rounded-full bg-slate-300" />
+            {/* Online status indicator for direct chats */}
+            {conv.type === "direct" && peer && isUserOnline(peer.id) && (
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+            )}
+          </div>
           <div>
             <div className="font-semibold text-sm">{conv.name}</div>
             <div className="text-xs text-slate-400">
@@ -278,6 +344,8 @@ export default function ChatWindow() {
                 ? `${conv.members.length} thành viên`
                 : peer?.isFriend === false
                 ? "Người lạ"
+                : isUserOnline(peer?.id || "")
+                ? "Đang hoạt động"
                 : "Bạn bè"}
             </div>
           </div>
@@ -367,6 +435,24 @@ export default function ChatWindow() {
         </div>
       )}
 
+      {/* TYPING INDICATOR */}
+      {selectedConversationId && typingUsers[selectedConversationId] && typingUsers[selectedConversationId].length > 0 && (
+        <div className="px-4 py-2 bg-white border-t border-slate-100">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <div className="flex gap-1">
+              <span className="animate-bounce" style={{ animationDelay: '0ms' }}>●</span>
+              <span className="animate-bounce" style={{ animationDelay: '150ms' }}>●</span>
+              <span className="animate-bounce" style={{ animationDelay: '300ms' }}>●</span>
+            </div>
+            <span>
+              {typingUsers[selectedConversationId].length === 1
+                ? `${typingUsers[selectedConversationId][0].userName} đang nhập...`
+                : `${typingUsers[selectedConversationId].length} người đang nhập...`}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
       <div className="h-16 border-t border-slate-200 px-4 flex items-center gap-3 bg-white relative">
         <button
@@ -412,7 +498,7 @@ export default function ChatWindow() {
           className="flex-1 px-3 py-2 rounded-full bg-slate-100 text-sm outline-none"
           placeholder={`Nhập @, tin nhắn tới ${conv.name}`}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
         />
         <button title="Gửi" className="text-2xl" onClick={handleSend}>

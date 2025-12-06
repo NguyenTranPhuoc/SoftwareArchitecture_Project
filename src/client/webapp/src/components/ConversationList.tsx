@@ -11,6 +11,8 @@ export default function ConversationList({
   const conversations = useChatStore((s) => s.conversations);
   const selectedId = useChatStore((s) => s.selectedConversationId);
   const selectConversation = useChatStore((s) => s.selectConversation);
+  const isUserOnline = useChatStore((s) => s.isUserOnline);
+  const me = useChatStore((s) => s.me);
 
   return (
     <div className="h-full flex flex-col">
@@ -20,6 +22,12 @@ export default function ConversationList({
       <div className="flex-1 overflow-y-auto">
         {conversations.map((conv) => {
           const active = conv.id === selectedId;
+          // For direct chats, find the other user
+          const peer = conv.type === 'direct' 
+            ? conv.members.find(m => m.id !== me.id)
+            : null;
+          const isOnline = peer ? isUserOnline(peer.id) : false;
+          
           return (
             <button
               key={conv.id}
@@ -27,8 +35,14 @@ export default function ConversationList({
               className={`w-full flex items-start gap-3 px-3 py-3 text-left hover:bg-slate-100
                 ${active ? "bg-sky-100" : ""}`}
             >
-              <div className="w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold">
-                {conv.name.charAt(0)}
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold">
+                  {conv.name.charAt(0)}
+                </div>
+                {/* Online status indicator for direct chats */}
+                {conv.type === 'direct' && isOnline && (
+                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center">

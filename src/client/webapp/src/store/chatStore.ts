@@ -73,6 +73,15 @@ interface ChatState {
   setMessages: (messages: Message[]) => void;
   isInfoPanelOpen: boolean;
   toggleInfoPanel: () => void;
+  // Typing indicator state
+  typingUsers: Record<string, { userId: string; userName: string }[]>; // conversationId -> array of typing users
+  setTypingUser: (conversationId: string, userId: string, userName: string) => void;
+  removeTypingUser: (conversationId: string, userId: string) => void;
+  // Online status state
+  onlineUsers: Set<string>; // Set of online user IDs
+  setUserOnline: (userId: string) => void;
+  setUserOffline: (userId: string) => void;
+  isUserOnline: (userId: string) => boolean;
   sendMessage: (conversationId: string, content: string) => void;
   sendFileMessage: (
     conversationId: string,
@@ -322,6 +331,8 @@ export const useChatStore = create<ChatState>((set) => ({
   setConversations: (conversations: Conversation[]) => set({ conversations }),
   setMessages: (messages: Message[]) => set({ messages }),
   isInfoPanelOpen: false,
+  typingUsers: {},
+  onlineUsers: new Set<string>(),
 
   toggleInfoPanel: () => set((s) => ({ isInfoPanelOpen: !s.isInfoPanelOpen })),
 
@@ -786,21 +797,69 @@ export const useChatStore = create<ChatState>((set) => ({
     set(() => ({
       me: user,
     })),
+
+  // Typing indicator methods
+  setTypingUser: (conversationId: string, userId: string, userName: string) =>
+    set((state) => {
+      const currentTyping = state.typingUsers[conversationId] || [];
+      // Don't add if already typing
+      if (currentTyping.some(u => u.userId === userId)) {
+        return state;
+      }
+      return {
+        typingUsers: {
+          ...state.typingUsers,
+          [conversationId]: [...currentTyping, { userId, userName }],
+        },
+      };
+    }),
+
+  removeTypingUser: (conversationId: string, userId: string) =>
+    set((state) => {
+      const currentTyping = state.typingUsers[conversationId] || [];
+      const filtered = currentTyping.filter(u => u.userId !== userId);
+      return {
+        typingUsers: {
+          ...state.typingUsers,
+          [conversationId]: filtered,
+        },
+      };
+    }),
+
+  // Online status methods
+  setUserOnline: (userId: string) =>
+    set((state) => {
+      const newOnlineUsers = new Set(state.onlineUsers);
+      newOnlineUsers.add(userId);
+      return { onlineUsers: newOnlineUsers };
+    }),
+
+  setUserOffline: (userId: string) =>
+    set((state) => {
+      const newOnlineUsers = new Set(state.onlineUsers);
+      newOnlineUsers.delete(userId);
+      return { onlineUsers: newOnlineUsers };
+    }),
+
+  isUserOnline: (userId: string): boolean => {
+    const state: ChatState = useChatStore.getState();
+    return state.onlineUsers.has(userId);
+  },
 }));
 
 // Set the actual implementations after store is created
 useChatStore.setState({
   getMemberRole: (conversationId: string, memberId: string): MemberRole => {
-    const state = useChatStore.getState();
-    const conv = state.conversations.find((c) => c.id === conversationId);
+    const state: ChatState = useChatStore.getState();
+    const conv = state.conversations.find((c: Conversation) => c.id === conversationId);
     if (!conv || conv.type !== "group" || !conv.memberRoles) {
       return "member";
     }
     return conv.memberRoles[memberId] || "member";
   },
   isGroupOwner: (conversationId: string): boolean => {
-    const state = useChatStore.getState();
-    const conv = state.conversations.find((c) => c.id === conversationId);
+    const state: ChatState = useChatStore.getState();
+    const conv = state.conversations.find((c: Conversation) => c.id === conversationId);
     if (!conv || conv.type !== "group" || !conv.memberRoles) {
       return false;
     }

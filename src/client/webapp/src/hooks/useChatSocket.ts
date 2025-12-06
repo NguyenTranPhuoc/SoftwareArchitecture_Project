@@ -85,23 +85,27 @@ export function useChatSocket() {
     // Handle typing indicators
     socket.on("typing:start", (data: { conversationId: string; userId: string; userName: string }) => {
       console.log("User typing:", data);
-      // TODO: Show typing indicator
+      const { setTypingUser } = useChatStore.getState();
+      setTypingUser(data.conversationId, data.userId, data.userName);
     });
 
     socket.on("typing:stop", (data: { conversationId: string; userId: string }) => {
       console.log("User stopped typing:", data);
-      // TODO: Hide typing indicator
+      const { removeTypingUser } = useChatStore.getState();
+      removeTypingUser(data.conversationId, data.userId);
     });
 
     // Handle user online/offline
     socket.on("user:online", (data: { userId: string }) => {
       console.log("User online:", data);
-      // TODO: Update user online status
+      const { setUserOnline } = useChatStore.getState();
+      setUserOnline(data.userId);
     });
 
     socket.on("user:offline", (data: { userId: string }) => {
       console.log("User offline:", data);
-      // TODO: Update user offline status
+      const { setUserOffline } = useChatStore.getState();
+      setUserOffline(data.userId);
     });
 
     socket.on("connect_error", (error) => {
