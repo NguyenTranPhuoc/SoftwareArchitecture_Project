@@ -8,22 +8,28 @@ const loginLimiter = rateLimit({ windowMs: config.rateLimit.loginWindowMs, max: 
 const register = [
   body("email").isEmail().withMessage("Invalid email"),
   body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters long"),
+  body("phone_number").optional().isMobilePhone().withMessage("Invalid phone number"),
   async (req, res) => {
     
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
       
-      const { email, password, full_name } = req.body;
+      const { email, password, full_name, phone_number } = req.body;
       const existing = await authService.findUserByEmail(email);
       if (existing) return res.status(409).json({ error: "Email already registered" });
       
-      await authService.createUser({ email, password, full_name });
+      await authService.createUser({ email, password, full_name, phone_number });
       
       return res.status(201).json({ 
         success: true,
-        message: "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
-        messageEn: "Registration successful! Please check your email to verify your account."
+        message: phone_number 
+          ? "Đăng ký thành công! Mã xác thực đã được gửi đến số điện thoại của bạn."
+          : "Đăng ký thành công! Vui lòng xác thực tài khoản.",
+        messageEn: phone_number
+          ? "Registration successful! Verification code sent to your phone."
+          : "Registration successful! Please verify your account.",
+        requiresVerification: true
       });
 
     } catch (error) {
@@ -182,4 +188,57 @@ const getStats = async (req, res) => {
   }
 };
 
-module.exports = { register, login, refresh, logout, verifyEmail, getStats};
+const verifyPhone = [
+  body("email").isEmail().withMessage("Invalid email"),
+  body("code").isLength({ min: 6, max: 6 }).withMessage("Code must be 6 digits"),
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+      const { email, code } = req.body;
+      await authService.verifyPhoneCode(email, code);
+
+      return res.status(200).json({
+        success: true,
+        message: "Xác thực thành công! Bạn có thể đăng nhập ngay bây giờ.",
+        messageEn: "Verification successful! You can now log in."
+      });
+
+    } catch (error) {
+      console.error("Error in verifyPhone:", error);
+      if (error.message === "Invalid verification code") {
+        return res.status(400).json({ error: "Mã xác thực không đúng" });
+      }
+      if (error.message === "Verification code expired") {
+        return res.status(400).json({ error: "Mã xác thực đã hết hạn" });
+      }
+      return res.status(400).json({ error: error.message || "Xác thực thất bại" });
+    }
+  }
+];
+
+const resendCode = [
+  body("email").isEmail().withMessage("Invalid email"),
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+      const { email } = req.body;
+      await authService.resendVerificationCode(email);
+
+      return res.status(200).json({
+        success: true,
+        message: "Mã xác thực mới đã được gửi đến số điện thoại của bạn.",
+        messageEn: "New verification code sent to your phone."
+      });
+
+    } catch (error) {
+      console.error("Error in resendCode:", error);
+      return res.status(400).json({ error: error.message || "Gửi lại mã thất bại" });
+    }
+  }
+];
+
+module.exports = { register, login, refresh, logout, verifyEmail, verifyPhone, resendCode, getStats};

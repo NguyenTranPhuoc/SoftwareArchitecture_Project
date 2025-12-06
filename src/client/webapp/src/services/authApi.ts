@@ -43,6 +43,7 @@ class AuthApiService {
     password: string;
     username: string;
     displayName: string;
+    phone_number?: string;
   }) {
     return this.request<AuthResponse>('/register', {
       method: 'POST',

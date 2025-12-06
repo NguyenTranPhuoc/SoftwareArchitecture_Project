@@ -23,6 +23,11 @@ User.init({
   full_name: { type: DataTypes.STRING },
   avatar_url: { type: DataTypes.STRING },
   date_of_birth: { type: DataTypes.DATE },
+  phone_number: { 
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: true
+  },
 
   is_verified: {
     type: DataTypes.BOOLEAN,
@@ -32,6 +37,14 @@ User.init({
   verification_token: {
     type: DataTypes.STRING,
     unique: true
+  },
+  verification_code: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  verification_code_expires: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   sequelize,  modelName: "User",

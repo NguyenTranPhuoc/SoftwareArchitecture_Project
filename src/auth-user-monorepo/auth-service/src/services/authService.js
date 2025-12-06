@@ -6,28 +6,33 @@ const { signAccessToken } = require("../../../common/src/utils/jwt");
 const config = require("../../../common/src/config");
 const { redisClient, parseTTLToSeconds } = require("../db/redisClient"); // <-- ADD THIS
 
-const createUser = async ({ email, password, full_name }) => {
+const createUser = async ({ email, password, full_name, phone_number }) => {
   const password_hash = await hashPassword(password);
-  // Create verification token
-  const crypto = require("crypto");
-  const verification_token = crypto.randomBytes(32).toString("hex");
+  
+  // Generate 6-digit verification code
+  const smsService = require("./smsService");
+  const verification_code = smsService.generateVerificationCode();
+  const verification_code_expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
   const user = await User.create({
     email,
     password_hash,
     full_name,
-    verification_token,
-    is_verified: false // Require email verification
+    phone_number,
+    verification_code,
+    verification_code_expires,
+    is_verified: false // Require verification
   });
 
-  // Send verification email
-  const emailService = require("./emailService");
-  try {
-    await emailService.sendVerificationEmail(user.email, user.verification_token);
-    console.log("✅ Verification email sent to:", user.email);
-  } catch (error) {
-    console.error("❌ Failed to send verification email:", error);
-    // Don't fail registration if email fails, but log it
+  // Send verification code via SMS
+  if (phone_number) {
+    try {
+      await smsService.sendVerificationSMS(phone_number, verification_code);
+      console.log("✅ Verification SMS sent to:", phone_number);
+    } catch (error) {
+      console.error("❌ Failed to send verification SMS:", error);
+      // Don't fail registration if SMS fails
+    }
   }
 
   return user;
@@ -100,11 +105,79 @@ const revokeRefreshToken = async (refreshTokenPlain) => {
   return result > 0; // Returns true if a key was deleted
 };
 
+const verifyPhoneCode = async (email, code) => {
+  const user = await User.findOne({ where: { email } });
+  
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.is_verified) {
+    throw new Error("Account already verified");
+  }
+
+  if (!user.verification_code || !user.verification_code_expires) {
+    throw new Error("No verification code found");
+  }
+
+  // Check if code expired
+  if (new Date() > user.verification_code_expires) {
+    throw new Error("Verification code expired");
+  }
+
+  // Check if code matches
+  if (user.verification_code !== code) {
+    throw new Error("Invalid verification code");
+  }
+
+  // Verify the user
+  await user.update({
+    is_verified: true,
+    verification_code: null,
+    verification_code_expires: null
+  });
+
+  return user;
+};
+
+const resendVerificationCode = async (email) => {
+  const user = await User.findOne({ where: { email } });
+  
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.is_verified) {
+    throw new Error("Account already verified");
+  }
+
+  if (!user.phone_number) {
+    throw new Error("No phone number registered");
+  }
+
+  // Generate new code
+  const smsService = require("./smsService");
+  const verification_code = smsService.generateVerificationCode();
+  const verification_code_expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  await user.update({
+    verification_code,
+    verification_code_expires
+  });
+
+  // Send new code
+  await smsService.sendVerificationSMS(user.phone_number, verification_code);
+
+  return user;
+};
+
 module.exports = { 
   createUser, 
   findUserByEmail, 
   authenticate, 
   generateTokensForUser, 
   rotateRefreshToken, 
-  revokeRefreshToken 
+  revokeRefreshToken,
+  verifyPhoneCode,
+  resendVerificationCode
 };
