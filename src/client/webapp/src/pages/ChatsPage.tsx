@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useOutletContext } from "react-router-dom";
 import { useChatStore } from "../store/chatStore";
 import api from "../services/api";
 import ConversationList from "../components/ConversationList";
@@ -7,9 +7,11 @@ import ChatWindow from "../components/ChatWindow";
 import ChatInfoPanel from "../components/ChatInfoPanel";
 import RecentSearch from "../components/RecentSearch";
 import SearchResult from "../components/SearchResult";
+import type { AppOutletContext } from "../layouts/AppLayout";
 
 export default function ChatsPage() {
   const [searchParams] = useSearchParams();
+  const socketMethods = useOutletContext<AppOutletContext>();
   const me = useChatStore((s) => s.me);
   const selectedId = useChatStore((s) => s.selectedConversationId);
   const selectConversation = useChatStore((s) => s.selectConversation);
@@ -46,6 +48,14 @@ export default function ChatsPage() {
         const newConversations = conversations.filter(c => !existingConvIds.has(c.id));
         
         setConversations([...formattedConversations, ...newConversations]);
+        
+        // Join all conversations via socket to receive real-time messages
+        if (socketMethods) {
+          formattedConversations.forEach((conv: any) => {
+            console.log('Joining conversation:', conv.id);
+            socketMethods.joinConversation(conv.id);
+          });
+        }
       } catch (error) {
         console.error('Failed to load conversations:', error);
       } finally {
@@ -54,7 +64,7 @@ export default function ChatsPage() {
     };
 
     loadConversations();
-  }, [me.id]); // Remove setConversations and conversations from dependencies to avoid infinite loop
+  }, [me.id, socketMethods]); // Add socketMethods to dependencies
 
   // Check for conversation parameter in URL and select it
   useEffect(() => {
@@ -62,6 +72,9 @@ export default function ChatsPage() {
     if (conversationId && conversationId !== selectedId) {
       // Always select the conversation from URL, even if not loaded yet
       selectConversation(conversationId);
+    } else if (!conversationId && selectedId) {
+      // Clear selection if no conversation in URL
+      selectConversation(undefined);
     }
   }, [searchParams.get('conversation')]); // Only depend on the URL parameter
 

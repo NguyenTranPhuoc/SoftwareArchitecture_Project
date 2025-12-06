@@ -68,7 +68,7 @@ interface ChatState {
   conversations: Conversation[];
   messages: Message[];
   selectedConversationId?: string;
-  selectConversation: (id: string) => void;
+  selectConversation: (id: string | undefined) => void;
   setConversations: (conversations: Conversation[]) => void;
   setMessages: (messages: Message[]) => void;
   isInfoPanelOpen: boolean;
@@ -326,12 +326,12 @@ export const useChatStore = create<ChatState>((set) => ({
   me,
   conversations: [], // Empty - will be loaded from API
   messages: [], // Empty - will be loaded from API
-  selectedConversationId: "",
-  selectConversation: (id: string) => set((state) => ({
+  selectedConversationId: undefined, // undefined means no conversation selected
+  selectConversation: (id: string | undefined) => set((state) => ({
     selectedConversationId: id,
-    conversations: state.conversations.map(c => 
+    conversations: id ? state.conversations.map(c => 
       c.id === id ? { ...c, unreadCount: 0 } : c
-    ),
+    ) : state.conversations,
   })),
   setConversations: (conversations: Conversation[]) => set({ conversations }),
   setMessages: (messages: Message[]) => set({ messages }),
