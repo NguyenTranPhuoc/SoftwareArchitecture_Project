@@ -36,7 +36,7 @@ export default function FriendsListView() {
     },
     onSuccess: (conversation: any) => {
       // Navigate to the chat page with the new conversation
-      navigate(`/chat?conversation=${conversation._id}`);
+      navigate(`/app/chats?conversation=${conversation._id}`);
     },
     onError: (error) => {
       console.error("Failed to create conversation:", error);
