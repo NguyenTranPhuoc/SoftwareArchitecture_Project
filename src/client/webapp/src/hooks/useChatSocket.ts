@@ -42,7 +42,7 @@ export function useChatSocket() {
             size: data.fileSize || 0,
             mimeType: data.type === "image" ? "image/jpeg" : "application/octet-stream",
             url: data.fileUrl,
-            thumbnailUrl: data.thumbnailUrl,
+            thumbnailUrl: data.thumbnailUrl || data.fileUrl, // Use fileUrl as fallback if no separate thumbnail
             isOnCloud: true,
             isUploading: false,
             uploadProgress: 100,

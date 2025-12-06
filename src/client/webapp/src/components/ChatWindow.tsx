@@ -57,7 +57,7 @@ export default function ChatWindow() {
             size: msg.fileSize || 0,
             mimeType: msg.type === 'image' ? 'image/jpeg' : 'application/octet-stream',
             url: msg.fileUrl,
-            thumbnailUrl: msg.thumbnailUrl,
+            thumbnailUrl: msg.thumbnailUrl || msg.fileUrl, // Use fileUrl as fallback if no separate thumbnail
             isOnCloud: true,
             isUploading: false,
             uploadProgress: 100,
