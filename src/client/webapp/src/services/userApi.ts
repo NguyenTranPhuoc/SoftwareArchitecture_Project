@@ -1,5 +1,6 @@
 // User API service for user profile management
-const USER_BASE_URL = import.meta.env.VITE_USER_URL || 'http://localhost:3002/users';
+// Use relative URL to work with nginx proxy in production
+const USER_BASE_URL = import.meta.env.VITE_USER_URL || '/users';
 
 export interface UserProfile {
   id: string;

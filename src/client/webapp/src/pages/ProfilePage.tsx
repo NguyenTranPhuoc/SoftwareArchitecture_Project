@@ -96,10 +96,11 @@ export default function ProfilePage() {
       formData.append('image', file); // Changed from 'file' to 'image'
 
       const token = localStorage.getItem('accessToken');
-      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:6000';
       
-      // Use /api/chat/image endpoint instead of /api/upload/test
-      const response = await fetch(`${BACKEND_URL}/api/chat/image`, {
+      // Use relative URL to work through nginx proxy in production
+      // In production, nginx proxies /api to backend:6000
+      // In development, vite proxy handles it
+      const response = await fetch('/api/chat/image', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

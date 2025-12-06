@@ -1,4 +1,5 @@
-const USER_BASE_URL = import.meta.env.VITE_USER_URL || 'http://localhost:3002/users';
+// Use relative URL to work with nginx proxy in production
+const USER_BASE_URL = import.meta.env.VITE_USER_URL || '/users';
 
 // Helper function for authenticated requests
 async function fetchWithAuth<T>(

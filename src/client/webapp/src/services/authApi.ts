@@ -1,5 +1,6 @@
 // Auth API service for authentication
-const AUTH_BASE_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:3001/auth';
+// Use relative URL to work with nginx proxy in production
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_URL || '/auth';
 
 interface AuthResponse {
   success?: boolean;
