@@ -41,7 +41,11 @@ export default function ChatsPage() {
           members: conv.participants || [],
         }));
         
-        setConversations(formattedConversations);
+        // Merge with existing conversations to preserve newly created ones
+        const existingConvIds = new Set(formattedConversations.map((c: any) => c.id));
+        const newConversations = conversations.filter(c => !existingConvIds.has(c.id));
+        
+        setConversations([...formattedConversations, ...newConversations]);
       } catch (error) {
         console.error('Failed to load conversations:', error);
       } finally {
@@ -50,24 +54,16 @@ export default function ChatsPage() {
     };
 
     loadConversations();
-  }, [me.id, setConversations]);
+  }, [me.id]); // Remove setConversations and conversations from dependencies to avoid infinite loop
 
   // Check for conversation parameter in URL and select it
   useEffect(() => {
     const conversationId = searchParams.get('conversation');
-    if (conversationId) {
-      // Check if conversation exists in store
-      const conversationExists = conversations.some(c => c.id === conversationId);
-      
-      if (conversationExists) {
-        selectConversation(conversationId);
-      } else {
-        // If conversation doesn't exist yet (newly created), still select it
-        // The ChatWindow component will handle loading the conversation details
-        selectConversation(conversationId);
-      }
+    if (conversationId && conversationId !== selectedId) {
+      // Always select the conversation from URL, even if not loaded yet
+      selectConversation(conversationId);
     }
-  }, [searchParams, selectConversation, conversations]);
+  }, [searchParams.get('conversation')]); // Only depend on the URL parameter
 
   return (
     <div className="flex flex-1 h-full">
