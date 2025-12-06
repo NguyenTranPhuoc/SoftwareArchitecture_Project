@@ -49,12 +49,14 @@ export default function FriendsListView() {
             id: friend.id,
             displayName: friend.full_name,
             avatarUrl: friend.avatar_url,
+            phoneNumber: friend.phone_number,
+            isFriend: true,
           }
         ],
       };
       
-      // Add to conversations and select it
-      chatStore.conversations.push(newConv);
+      // Add to conversations properly using setConversations
+      chatStore.setConversations([...chatStore.conversations, newConv]);
       chatStore.selectConversation(conversation._id);
       
       // Navigate to the chat page

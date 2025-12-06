@@ -83,3 +83,4 @@ tests/server
 # GCP credentials
 config/*.json
 **/config/*.json
+GCS/
