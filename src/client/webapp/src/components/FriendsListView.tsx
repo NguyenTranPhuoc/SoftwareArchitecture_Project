@@ -44,13 +44,27 @@ export default function FriendsListView() {
         lastMessagePreview: '',
         unreadCount: 0,
         members: [
-          me,
+          {
+            id: me.id,
+            full_name: me.displayName || me.full_name || '',
+            email: me.email,
+            phone_number: me.phoneNumber || me.phone_number || '',
+            avatar_url: me.avatar_url,
+            displayName: me.displayName,
+            phoneNumber: me.phoneNumber,
+            isFriend: me.isFriend,
+            role: 'member' as const
+          },
           {
             id: friend.id,
+            full_name: friend.full_name,
+            email: friend.email,
+            phone_number: friend.phone_number || '',
+            avatar_url: friend.avatar_url,
             displayName: friend.full_name,
-            avatarUrl: friend.avatar_url,
             phoneNumber: friend.phone_number || '',
             isFriend: true,
+            role: 'member' as const
           }
         ],
       };

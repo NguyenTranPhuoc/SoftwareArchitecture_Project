@@ -46,12 +46,17 @@ export default function LoginPage() {
         // Store user info
         localStorage.setItem('user', JSON.stringify(user));
         
-        // Update chat store with current user
+        // Update chat store with current user (as GroupMember)
         setCurrentUser({
           id: user.id,
+          full_name: user.displayName,
+          email: user.email,
+          phone_number: '',
+          avatar_url: undefined,
           displayName: user.displayName,
           phoneNumber: '',
-          isFriend: true
+          isFriend: true,
+          role: 'member'
         });
         
         navigate("/app/chats");
