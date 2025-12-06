@@ -34,7 +34,7 @@ export default function ChatWindow() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<number | null>(null);
   const isTypingRef = useRef(false);
 
   // Load messages when conversation is selected
@@ -172,7 +172,7 @@ export default function ChatWindow() {
     
     // Stop typing after 2 seconds of inactivity
     if (value.length > 0) {
-      typingTimeoutRef.current = setTimeout(() => {
+      typingTimeoutRef.current = window.setTimeout(() => {
         if (isTypingRef.current) {
           isTypingRef.current = false;
           socketMethods.stopTyping(selectedConversationId);
