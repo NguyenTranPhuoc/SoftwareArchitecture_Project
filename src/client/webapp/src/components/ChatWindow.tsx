@@ -1,6 +1,6 @@
 // src/components/ChatWindow.tsx
 import { useChatStore, validateFile, type Message } from "../store/chatStore";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { AppOutletContext } from "../layouts/AppLayout";
 import MessageBubbleWithInteractions from "./MessageBubbleWithInteractions";
@@ -14,6 +14,7 @@ export default function ChatWindow() {
     messages,
     me,
     sendFileMessage,
+    setMessages,
     recallMessage,
     deleteMessageForMe,
     addReaction,
@@ -27,9 +28,55 @@ export default function ChatWindow() {
   const [text, setText] = useState("");
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+
+  // Load messages when conversation is selected
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!selectedConversationId) return;
+      
+      setIsLoadingMessages(true);
+      try {
+        const response: any = await api.getMessages(selectedConversationId, 100, 0);
+        const messagesData = response.data || response;
+        
+        // Transform API response to match store format
+        const formattedMessages: Message[] = messagesData.map((msg: any) => ({
+          id: msg._id,
+          conversationId: msg.conversationId,
+          senderId: msg.senderId,
+          content: msg.content,
+          type: msg.type || 'text',
+          createdAt: msg.createdAt,
+          isOwn: msg.senderId === me.id,
+          fileUrl: msg.fileUrl,
+          fileName: msg.fileName,
+          fileSize: msg.fileSize,
+          thumbnailUrl: msg.thumbnailUrl,
+          isRecalled: msg.isDeleted,
+          reactions: msg.reactions || [],
+          replyTo: msg.replyTo,
+        }));
+        
+        // Merge with existing messages (keep real-time messages that aren't in DB yet)
+        const existingRealtimeMessages = messages.filter(
+          m => m.conversationId === selectedConversationId && 
+               !formattedMessages.some(fm => fm.id === m.id)
+        );
+        
+        setMessages([...formattedMessages, ...existingRealtimeMessages]);
+      } catch (error) {
+        console.error('Failed to load messages:', error);
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    };
+
+    loadMessages();
+  }, [selectedConversationId, me.id, setMessages]);
 
   const conv = conversations.find((c) => c.id === selectedConversationId);
   const convMessages = messages.filter(

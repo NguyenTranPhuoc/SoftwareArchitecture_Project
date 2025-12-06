@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useChatStore } from "../store/chatStore";
+import api from "../services/api";
 import ConversationList from "../components/ConversationList";
 import ChatWindow from "../components/ChatWindow";
 import ChatInfoPanel from "../components/ChatInfoPanel";
@@ -9,13 +10,47 @@ import SearchResult from "../components/SearchResult";
 
 export default function ChatsPage() {
   const [searchParams] = useSearchParams();
+  const me = useChatStore((s) => s.me);
   const selectedId = useChatStore((s) => s.selectedConversationId);
   const selectConversation = useChatStore((s) => s.selectConversation);
   const conversations = useChatStore((s) => s.conversations);
+  const setConversations = useChatStore((s) => s.setConversations);
   const isInfoPanelOpen = useChatStore((s) => s.isInfoPanelOpen);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+
+  // Load conversations from API on mount
+  useEffect(() => {
+    const loadConversations = async () => {
+      if (!me.id) return;
+      
+      setIsLoadingConversations(true);
+      try {
+        const response: any = await api.getConversations(me.id);
+        const conversationsData = response.data || response;
+        
+        // Transform API response to match store format
+        const formattedConversations = conversationsData.map((conv: any) => ({
+          id: conv._id,
+          name: conv.name || 'Chat',
+          type: conv.type,
+          lastMessagePreview: '',
+          unreadCount: 0,
+          members: conv.participants || [],
+        }));
+        
+        setConversations(formattedConversations);
+      } catch (error) {
+        console.error('Failed to load conversations:', error);
+      } finally {
+        setIsLoadingConversations(false);
+      }
+    };
+
+    loadConversations();
+  }, [me.id, setConversations]);
 
   // Check for conversation parameter in URL and select it
   useEffect(() => {

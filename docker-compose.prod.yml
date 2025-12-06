@@ -83,6 +83,12 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-redis123}@redis:6379
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production-2024}
       CORS_ORIGIN: http://34.124.227.173:3000,http://frontend:80
+      # GCS Upload Configuration
+      GCS_PROJECT_ID: zola-478416
+      GCS_BUCKET_NAME: zola-uploads-2470576
+      GCS_KEY_FILE: /app/config/zola-478416-4990089e3062.json
+    volumes:
+      - ./GCS:/app/config:ro
     depends_on:
       - mongodb
       - postgres
