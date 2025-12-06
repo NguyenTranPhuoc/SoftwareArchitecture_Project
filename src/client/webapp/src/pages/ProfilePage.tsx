@@ -91,14 +91,15 @@ export default function ProfilePage() {
       setUploading(true);
       setError("");
 
-      // Upload to GCS via backend
+      // Upload to GCS via backend chat endpoint
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('image', file); // Changed from 'file' to 'image'
 
       const token = localStorage.getItem('accessToken');
       const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:6000';
       
-      const response = await fetch(`${BACKEND_URL}/api/upload/test`, {
+      // Use /api/chat/image endpoint instead of /api/upload/test
+      const response = await fetch(`${BACKEND_URL}/api/chat/image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -107,11 +108,12 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        throw new Error('Upload thất bại');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload thất bại');
       }
 
       const data = await response.json();
-      const avatarUrl = data.url;
+      const avatarUrl = data.imageUrl; // Changed from 'url' to 'imageUrl'
 
       // Update profile with new avatar URL
       const updated = await userApi.updateProfile(me.id, { avatar_url: avatarUrl });
@@ -133,12 +135,17 @@ export default function ProfilePage() {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
-        await authApi.logout(refreshToken);
+        try {
+          await authApi.logout(refreshToken);
+        } catch (logoutErr) {
+          // Ignore logout API errors, just log them
+          console.warn('Logout API call failed (continuing anyway):', logoutErr);
+        }
       }
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
-      // Clear all stored data
+      // Always clear local storage and redirect, even if API fails
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
