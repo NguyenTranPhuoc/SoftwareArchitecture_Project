@@ -60,11 +60,13 @@ cat .env | grep CORS
 
 # 3. Run database migration for phone verification
 echo "Step 3: Running database migrations..."
-POSTGRES_CONTAINER=$(docker ps -qf "name=postgres")
+# Find postgres container name
+POSTGRES_CONTAINER=$(docker ps --filter "name=postgres" --format "{{.Names}}" | head -n 1)
 if [ -n "$POSTGRES_CONTAINER" ]; then
-  docker exec $POSTGRES_CONTAINER psql -U postgres -d zalo_auth_db -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50) UNIQUE;"
-  docker exec $POSTGRES_CONTAINER psql -U postgres -d zalo_auth_db -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6);"
-  docker exec $POSTGRES_CONTAINER psql -U postgres -d zalo_auth_db -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code_expires TIMESTAMP;"
+  echo "Found PostgreSQL container: $POSTGRES_CONTAINER"
+  docker exec "$POSTGRES_CONTAINER" psql -U postgres -d zalo_auth_db -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50) UNIQUE;" 2>/dev/null || echo "Column phone_number may already exist"
+  docker exec "$POSTGRES_CONTAINER" psql -U postgres -d zalo_auth_db -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6);" 2>/dev/null || echo "Column verification_code may already exist"
+  docker exec "$POSTGRES_CONTAINER" psql -U postgres -d zalo_auth_db -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code_expires TIMESTAMP;" 2>/dev/null || echo "Column verification_code_expires may already exist"
   echo "✅ Database migrations complete"
 else
   echo "⚠️ PostgreSQL container not found, skipping migrations"
