@@ -31,11 +31,11 @@ export class ChatService {
     }
 
     const conversation = await conversationModel.createConversation({
-      participants: participants.map(id => new mongoose.Types.ObjectId(id)),
+      participants, // Keep as UUID strings
       type,
       name,
       avatar,
-      createdBy: new mongoose.Types.ObjectId(createdBy),
+      createdBy, // Keep as UUID string
     });
 
     // Cache the new conversation

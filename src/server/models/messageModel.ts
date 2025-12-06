@@ -3,24 +3,24 @@ import { getMongoDB } from '../utils/database';
 
 export interface IMessage {
   _id?: ObjectId;
-  conversationId: ObjectId; // ✅ Changed from string to ObjectId
-  senderId: ObjectId; // ✅ Changed from string to ObjectId
+  conversationId: ObjectId; // MongoDB conversation ID
+  senderId: string; // User UUID from PostgreSQL
   content: string;
-  type: 'text' | 'image' | 'file' | 'audio' | 'video' | 'sticker' | 'location'; // ✅ Added sticker, location
+  type: 'text' | 'image' | 'file' | 'audio' | 'video' | 'sticker' | 'location';
   fileUrl?: string; // For media messages (GCS bucket URL)
   fileName?: string; // For file messages
   fileSize?: number; // For file messages
-  thumbnailUrl?: string; // ✅ NEW: Thumbnail for video/image
-  replyTo?: ObjectId; // ✅ Changed from string to ObjectId - Message ID being replied to
-  readBy: ObjectId[]; // ✅ Changed from string[] to ObjectId[] - Array of user IDs who have read the message
+  thumbnailUrl?: string; // Thumbnail for video/image
+  replyTo?: ObjectId; // Message ID being replied to
+  readBy: string[]; // Array of user UUIDs who have read the message
   reactions?: {
     emoji: string;
-    userId: ObjectId; // ✅ Changed from string to ObjectId
+    userId: string; // User UUID from PostgreSQL
   }[];
   isEdited: boolean;
-  editedAt?: Date; // ✅ NEW: Timestamp of last edit
+  editedAt?: Date; // Timestamp of last edit
   isDeleted: boolean;
-  deletedAt?: Date; // ✅ NEW: Timestamp of deletion
+  deletedAt?: Date; // Timestamp of deletion
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,20 +47,17 @@ export class MessageModel {
     thumbnailUrl?: string;
     replyTo?: string;
   }): Promise<IMessage> {
-    // Convert string IDs to ObjectIds if needed
+    // Convert conversationId string to ObjectId if needed
     const conversationId = typeof data.conversationId === 'string'
       ? new ObjectId(data.conversationId)
       : data.conversationId;
-    const senderId = typeof data.senderId === 'string'
-      ? new ObjectId(data.senderId)
-      : data.senderId;
     const replyTo = data.replyTo
       ? (typeof data.replyTo === 'string' ? new ObjectId(data.replyTo) : data.replyTo)
       : undefined;
 
     const message: IMessage = {
       conversationId,
-      senderId,
+      senderId: data.senderId, // Keep as UUID string
       content: data.content,
       type: data.type,
       fileUrl: data.fileUrl,
@@ -68,7 +65,7 @@ export class MessageModel {
       fileSize: data.fileSize,
       thumbnailUrl: data.thumbnailUrl,
       replyTo,
-      readBy: [senderId], // Sender has read their own message
+      readBy: [data.senderId], // Sender has read their own message
       isEdited: false,
       isDeleted: false,
       createdAt: new Date(),
@@ -117,7 +114,7 @@ export class MessageModel {
     const result = await this.getCollection().updateOne(
       { _id: new ObjectId(messageId) },
       {
-        $addToSet: { readBy: new ObjectId(userId) }, // ✅ Convert userId to ObjectId
+        $addToSet: { readBy: userId }, // Keep as UUID string
         $set: { updatedAt: new Date() },
       }
     );
@@ -129,15 +126,14 @@ export class MessageModel {
     conversationId: string,
     userId: string
   ): Promise<number> {
-    const userObjId = new ObjectId(userId); // ✅ Convert once for reuse
     const result = await this.getCollection().updateMany(
       {
-        conversationId: new ObjectId(conversationId), // ✅ Convert to ObjectId
-        senderId: { $ne: userObjId }, // Don't mark own messages
-        readBy: { $ne: userObjId }, // Only messages not already read
+        conversationId: new ObjectId(conversationId),
+        senderId: { $ne: userId }, // Don't mark own messages, use UUID string
+        readBy: { $ne: userId }, // Only messages not already read, use UUID string
       },
       {
-        $addToSet: { readBy: userObjId },
+        $addToSet: { readBy: userId }, // Use UUID string
         $set: { updatedAt: new Date() },
       }
     );
@@ -188,7 +184,7 @@ export class MessageModel {
       { _id: new ObjectId(messageId) },
       {
         $push: {
-          reactions: { emoji, userId: new ObjectId(userId) }, // ✅ Convert userId to ObjectId
+          reactions: { emoji, userId }, // Keep as UUID string
         },
         $set: { updatedAt: new Date() },
       }
@@ -202,7 +198,7 @@ export class MessageModel {
       { _id: new ObjectId(messageId) },
       {
         $pull: {
-          reactions: { emoji, userId: new ObjectId(userId) }, // ✅ Convert userId to ObjectId
+          reactions: { emoji, userId }, // Keep as UUID string
         },
         $set: { updatedAt: new Date() },
       }
@@ -212,11 +208,10 @@ export class MessageModel {
   }
 
   async getUnreadCount(conversationId: string, userId: string): Promise<number> {
-    const userObjId = new ObjectId(userId); // ✅ Convert once for reuse
     return await this.getCollection().countDocuments({
-      conversationId: new ObjectId(conversationId), // ✅ Convert to ObjectId
-      senderId: { $ne: userObjId },
-      readBy: { $ne: userObjId },
+      conversationId: new ObjectId(conversationId),
+      senderId: { $ne: userId }, // Use UUID string
+      readBy: { $ne: userId }, // Use UUID string
       isDeleted: false,
     });
   }

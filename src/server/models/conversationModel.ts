@@ -3,15 +3,15 @@ import { getMongoDB } from '../utils/database';
 
 export interface IConversation {
   _id?: ObjectId;
-  participants: ObjectId[]; // ✅ Changed from string[] to ObjectId[] - Array of user IDs
+  participants: string[]; // Array of user UUIDs from PostgreSQL
   type: 'direct' | 'group';
   name?: string; // For group chats
   avatar?: string; // For group chats (GCS bucket URL)
-  createdBy?: ObjectId; // ✅ Changed from string to ObjectId - User ID who created the conversation
-  lastMessageId?: ObjectId; // ✅ NEW: Reference to last message instead of embedding full object
-  lastMessageTimestamp?: Date; // ✅ NEW: Denormalized for sorting without $lookup
-  isArchived?: boolean; // ✅ NEW: Whether conversation is archived
-  archivedBy?: ObjectId[]; // ✅ NEW: Array of user IDs who archived this conversation
+  createdBy?: string; // User UUID who created the conversation
+  lastMessageId?: ObjectId; // Reference to last message
+  lastMessageTimestamp?: Date; // Denormalized for sorting without $lookup
+  isArchived?: boolean; // Whether conversation is archived
+  archivedBy?: string[]; // Array of user UUIDs who archived this conversation
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,15 +47,15 @@ export class ConversationModel {
 
   async findConversationsByUserId(userId: string): Promise<IConversation[]> {
     return await this.getCollection()
-      .find({ participants: new ObjectId(userId) }) // ✅ Convert userId to ObjectId
-      .sort({ lastMessageTimestamp: -1 }) // ✅ Sort by lastMessageTimestamp instead of updatedAt for better UX
+      .find({ participants: userId }) // Use UUID string directly
+      .sort({ lastMessageTimestamp: -1 })
       .toArray();
   }
 
   async findDirectConversation(userId1: string, userId2: string): Promise<IConversation | null> {
     return await this.getCollection().findOne({
       type: 'direct',
-      participants: { $all: [new ObjectId(userId1), new ObjectId(userId2)] }, // ✅ Convert both userIds to ObjectId
+      participants: { $all: [userId1, userId2] }, // Use UUID strings directly
     });
   }
 
