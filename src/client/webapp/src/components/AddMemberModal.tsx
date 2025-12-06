@@ -144,7 +144,19 @@ export default function AddMemberModal({
 
   const handleConfirm = () => {
     if (selectedMembers.length === 0) return;
-    addMembers(conversationId, selectedMembers);
+    // Convert UserProfile to GroupMember
+    const groupMembers = selectedMembers.map(member => ({
+      id: member.id,
+      full_name: member.displayName || member.full_name || '',
+      email: member.email,
+      phone_number: member.phoneNumber || member.phone_number || '',
+      avatar_url: member.avatar_url,
+      displayName: member.displayName,
+      phoneNumber: member.phoneNumber,
+      isFriend: member.isFriend,
+      role: 'member' as const
+    }));
+    addMembers(conversationId, groupMembers);
     onSuccess();
   };
 

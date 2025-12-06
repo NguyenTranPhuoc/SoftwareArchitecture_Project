@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import {
   type Message,
   type UserProfile,
+  type GroupMember,
   formatFileSize,
 } from "../store/chatStore";
 import QuickActionButtons from "./QuickActionButtons";
@@ -9,9 +10,9 @@ import MessageInteractionMenu from "./MessageInteractionMenu";
 
 interface MessageBubbleWithInteractionsProps {
   message: Message;
-  me: UserProfile;
+  me: UserProfile | GroupMember;
   allMessages: Message[];
-  allMembers: UserProfile[];
+  allMembers: GroupMember[];
   onDownload: (url: string, filename: string) => void;
   onReply: (message: Message) => void;
   onShare: (message: Message) => void;

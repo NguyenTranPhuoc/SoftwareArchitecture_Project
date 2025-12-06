@@ -39,7 +39,8 @@ export default function RoleManagementModal({
   // Filter by search
   const filteredMembers = availableMembers.filter((member) => {
     const query = searchQuery.toLowerCase();
-    return member.displayName.toLowerCase().includes(query);
+    const memberName = member.displayName || member.full_name || '';
+    return memberName.toLowerCase().includes(query);
   });
 
   const isDeputy = (memberId: string) =>
@@ -136,11 +137,11 @@ export default function RoleManagementModal({
                       className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-lg"
                     >
                       <div className="w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center text-sm font-semibold">
-                        {member.displayName.charAt(0)}
+                        {(member.displayName || member.full_name || '?').charAt(0)}
                       </div>
                       <div className="flex-1 text-left">
                         <div className="text-sm font-medium">
-                          {member.displayName}
+                          {member.displayName || member.full_name}
                         </div>
                         {isCurrentlyDeputy && (
                           <div className="text-xs text-slate-500">Phó nhóm</div>
@@ -181,10 +182,10 @@ export default function RoleManagementModal({
                     className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50"
                   >
                     <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-xs font-semibold">
-                      {member.displayName.charAt(0)}
+                      {(member.displayName || member.full_name || '?').charAt(0)}
                     </div>
                     <div className="flex-1 text-sm truncate">
-                      {member.displayName}
+                      {member.displayName || member.full_name}
                     </div>
                     <button
                       onClick={() => handleRemoveMember(memberId)}

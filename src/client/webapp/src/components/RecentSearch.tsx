@@ -1,5 +1,5 @@
 import type React from "react";
-import { useChatStore, type UserProfile } from "../store/chatStore";
+import { useChatStore, type UserProfile, type GroupMember } from "../store/chatStore";
 
 interface RecentSearchProps {
   query: string;
@@ -19,8 +19,8 @@ export default function RecentSearch({
   );
 
   // lấy danh sách user từ các cuộc hội thoại (trừ mình) – coi như "Tìm gần đây"
-  const recentUsers: UserProfile[] = [];
-  const map = new Map<string, UserProfile>();
+  const recentUsers: GroupMember[] = [];
+  const map = new Map<string, GroupMember>();
 
   conversations.forEach((c) => {
     c.members.forEach((u) => {
@@ -36,8 +36,19 @@ export default function RecentSearch({
     onQueryChange(e.target.value);
   };
 
-  const handleClickUser = (u: UserProfile) => {
-    startDirectConversation(u);
+  const handleClickUser = (u: GroupMember) => {
+    // Convert GroupMember to UserProfile for startDirectConversation
+    const userProfile: UserProfile = {
+      id: u.id,
+      displayName: u.displayName || u.full_name,
+      phoneNumber: u.phoneNumber || u.phone_number || '',
+      isFriend: u.isFriend !== undefined ? u.isFriend : true,
+      full_name: u.full_name,
+      email: u.email,
+      phone_number: u.phone_number,
+      avatar_url: u.avatar_url
+    };
+    startDirectConversation(userProfile);
     // CHÚ Ý: không gọi onClose ở đây → panel search vẫn mở
   };
 
