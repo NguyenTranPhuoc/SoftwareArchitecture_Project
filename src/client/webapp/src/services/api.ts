@@ -116,6 +116,67 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // File uploads
+  async uploadImage(file: File): Promise<{ imageUrl: string; thumbnail: string; metadata: any }> {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch('/api/chat/image', {
+      method: 'POST',
+      headers: {
+        ...this.getAuthHeaders(),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Image upload failed');
+    }
+
+    const data = await response.json();
+    return data;
+  }
+
+  async uploadVideo(file: File): Promise<{ videoUrl: string; metadata: any }> {
+    const formData = new FormData();
+    formData.append('video', file);
+
+    const response = await fetch('/api/chat/video', {
+      method: 'POST',
+      headers: {
+        ...this.getAuthHeaders(),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Video upload failed');
+    }
+
+    const data = await response.json();
+    return data;
+  }
+
+  async uploadFile(file: File): Promise<{ fileUrl: string; metadata: any }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/chat/file', {
+      method: 'POST',
+      headers: {
+        ...this.getAuthHeaders(),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('File upload failed');
+    }
+
+    const data = await response.json();
+    return data;
+  }
 }
 
 export const api = new ApiService();

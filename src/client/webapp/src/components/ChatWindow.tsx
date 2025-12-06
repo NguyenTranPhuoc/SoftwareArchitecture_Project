@@ -5,6 +5,7 @@ import { useOutletContext } from "react-router-dom";
 import type { AppOutletContext } from "../layouts/AppLayout";
 import MessageBubbleWithInteractions from "./MessageBubbleWithInteractions";
 import ReplyContext from "./ReplyContext";
+import api from "../services/api";
 
 export default function ChatWindow() {
   const {
@@ -96,21 +97,24 @@ export default function ChatWindow() {
       return;
     }
 
-    // For now, we'll use the local sendFileMessage which simulates upload
-    // In production, this would upload to GCS and then send via socket
-    await sendFileMessage(conv.id, file, "file", (payload) => {
-      if (payload.fileMetadata.url) {
-        socketMethods.sendFileMessage({
-          conversationId: payload.conversationId,
-          content: payload.content,
-          type: payload.messageType,
-          fileUrl: payload.fileMetadata.url,
-          fileName: payload.fileMetadata.filename,
-          fileSize: payload.fileMetadata.size,
-          thumbnailUrl: payload.fileMetadata.thumbnailUrl,
-        });
-      }
-    });
+    try {
+      // Upload to GCS
+      const response = await api.uploadFile(file);
+      
+      // Send message with uploaded file URL
+      socketMethods.sendFileMessage({
+        conversationId: conv.id,
+        content: `📎 ${file.name}`,
+        type: 'file',
+        fileUrl: response.fileUrl,
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } catch (error) {
+      console.error('File upload failed:', error);
+      alert('Không thể tải lên tệp. Vui lòng thử lại.');
+    }
+    
     e.target.value = ""; // Reset input
   };
 
@@ -124,21 +128,25 @@ export default function ChatWindow() {
       return;
     }
 
-    // For now, we'll use the local sendFileMessage which simulates upload
-    // In production, this would upload to GCS and then send via socket
-    await sendFileMessage(conv.id, file, "image", (payload) => {
-      if (payload.fileMetadata.url) {
-        socketMethods.sendFileMessage({
-          conversationId: payload.conversationId,
-          content: payload.content,
-          type: payload.messageType,
-          fileUrl: payload.fileMetadata.url,
-          fileName: payload.fileMetadata.filename,
-          fileSize: payload.fileMetadata.size,
-          thumbnailUrl: payload.fileMetadata.thumbnailUrl,
-        });
-      }
-    });
+    try {
+      // Upload to GCS
+      const response = await api.uploadImage(file);
+      
+      // Send message with uploaded image URL
+      socketMethods.sendFileMessage({
+        conversationId: conv.id,
+        content: '🖼️ Hình ảnh',
+        type: 'image',
+        fileUrl: response.imageUrl,
+        fileName: file.name,
+        fileSize: file.size,
+        thumbnailUrl: response.thumbnail,
+      });
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      alert('Không thể tải lên hình ảnh. Vui lòng thử lại.');
+    }
+    
     e.target.value = ""; // Reset input
   };
 
@@ -160,19 +168,24 @@ export default function ChatWindow() {
       return;
     }
 
-    await sendFileMessage(conv.id, file, "file", (payload) => {
-      if (payload.fileMetadata.url) {
-        socketMethods.sendFileMessage({
-          conversationId: payload.conversationId,
-          content: "🎥 Video",
-          type: "video" as any,
-          fileUrl: payload.fileMetadata.url,
-          fileName: payload.fileMetadata.filename,
-          fileSize: payload.fileMetadata.size,
-          thumbnailUrl: payload.fileMetadata.thumbnailUrl,
-        });
-      }
-    });
+    try {
+      // Upload to GCS
+      const response = await api.uploadVideo(file);
+      
+      // Send message with uploaded video URL
+      socketMethods.sendFileMessage({
+        conversationId: conv.id,
+        content: "🎥 Video",
+        type: "video" as any,
+        fileUrl: response.videoUrl,
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } catch (error) {
+      console.error('Video upload failed:', error);
+      alert('Không thể tải lên video. Vui lòng thử lại.');
+    }
+    
     e.target.value = "";
   };
 

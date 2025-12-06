@@ -79,6 +79,8 @@ import conversationRoutes from './routes/conversationRoutes';
 import messageRoutes from './routes/messageRoutes';
 
 // Register routes
+app.use('/api/upload', uploadRoutes);
+app.use('/api/chat', chatRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/messages', messageRoutes);
 
