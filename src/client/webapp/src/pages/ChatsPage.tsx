@@ -23,10 +23,13 @@ export default function ChatsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
 
-  // Clear selection on mount if no conversation in URL
+  // Ensure no conversation is selected initially if no URL param
   useEffect(() => {
     const conversationId = searchParams.get('conversation');
-    if (!conversationId && selectedId) {
+    console.log('[ChatsPage] Mount - URL conversation param:', conversationId, 'selectedId:', selectedId);
+    if (!conversationId) {
+      // Clear any selected conversation if no URL parameter
+      console.log('[ChatsPage] Clearing selected conversation');
       selectConversation(undefined);
     }
   }, []); // Run once on mount
@@ -114,14 +117,16 @@ export default function ChatsPage() {
 
       {/* Khung chat */}
       <div className="flex-1 flex flex-col bg-slate-50 border-r border-slate-200">
-        {selectedId ? (
-          <ChatWindow />
-        ) : (
-          <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="h-14 border-b border-slate-200 bg-white px-4 flex items-center">
-              <h2 className="font-semibold text-lg">Tin nhắn</h2>
-            </div>
+        {(() => {
+          console.log('[ChatsPage] Render - selectedId:', selectedId, 'conversations:', conversations.length);
+          return selectedId ? (
+            <ChatWindow />
+          ) : (
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="h-14 border-b border-slate-200 bg-white px-4 flex items-center">
+                <h2 className="font-semibold text-lg">Tin nhắn</h2>
+              </div>
             {/* Conversation list in main area */}
             <div className="flex-1 overflow-y-auto bg-white">
               {isLoadingConversations ? (
@@ -174,7 +179,8 @@ export default function ChatsPage() {
               )}
             </div>
           </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Panel bên phải: chỉ render nếu đang mở */}
