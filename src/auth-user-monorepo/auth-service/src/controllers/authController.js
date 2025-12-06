@@ -21,7 +21,9 @@ const register = [
       await authService.createUser({ email, password, full_name });
       
       return res.status(201).json({ 
-        message: "Registration successful. You can now log in." 
+        success: true,
+        message: "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
+        messageEn: "Registration successful! Please check your email to verify your account."
       });
 
     } catch (error) {
@@ -53,7 +55,10 @@ const login = [
     } catch (error) {
       // Catch custom error from authService
       if (error.message === "Account not verified. Please check your email.") {
-        return res.status(403).json({ error: error.message });
+        return res.status(403).json({ 
+          error: "Tài khoản chưa được xác thực. Vui lòng kiểm tra email.",
+          errorEn: error.message 
+        });
       }
       console.error("Login Error:", error);
       return res.status(500).json({ error: "Internal server error" });
@@ -103,7 +108,24 @@ const verifyEmail = async (req, res) => {
     const user = await User.findOne({ where: { verification_token: token } });
 
     if (!user) {
-      return res.status(400).json({ error: "Invalid or expired verification token." });
+      return res.status(400).send(`
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Xác thực thất bại</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+              .error { color: #d32f2f; }
+              a { color: #0068FF; text-decoration: none; }
+            </style>
+          </head>
+          <body>
+            <h1 class="error">❌ Xác thực thất bại</h1>
+            <p>Link xác thực không hợp lệ hoặc đã hết hạn.</p>
+            <p><a href="http://34.124.227.173:3000/login">Quay lại trang đăng nhập</a></p>
+          </body>
+        </html>
+      `);
     }
 
     // Verify the user
@@ -112,8 +134,27 @@ const verifyEmail = async (req, res) => {
       verification_token: null // Delete token so it can't be reused
     });
 
-    // Return a simple HTML page
-    return res.status(200).send("<h1>Email verified successfully!</h1><p>You can now log in.</p>");
+    // Return a success page and redirect
+    return res.status(200).send(`
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Xác thực thành công</title>
+          <meta http-equiv="refresh" content="3;url=http://34.124.227.173:3000/login">
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+            .success { color: #4caf50; }
+            a { color: #0068FF; text-decoration: none; }
+          </style>
+        </head>
+        <body>
+          <h1 class="success">✅ Xác thực email thành công!</h1>
+          <p>Bạn có thể đăng nhập ngay bây giờ.</p>
+          <p>Đang chuyển hướng đến trang đăng nhập trong 3 giây...</p>
+          <p><a href="http://34.124.227.173:3000/login">Nhấp vào đây nếu không được chuyển hướng</a></p>
+        </body>
+      </html>
+    `);
 
   } catch (error) {
     console.error(error);

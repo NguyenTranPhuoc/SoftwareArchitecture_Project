@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const setCurrentUser = useChatStore((state) => state.setCurrentUser);
 
@@ -63,13 +64,22 @@ export default function LoginPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
-      await authApi.register({ email, password, username, displayName });
+      const response = await authApi.register({ email, password, username, displayName });
       setError("");
-      alert("Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
-      setMode("login");
+      setSuccess((response as any).message || "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
+      // Clear form
+      setPassword("");
+      setUsername("");
+      setDisplayName("");
+      // Switch to login mode after 3 seconds
+      setTimeout(() => {
+        setMode("login");
+        setSuccess("");
+      }, 5000);
     } catch (err: any) {
       setError(err.message || "Đăng ký thất bại");
     } finally {
@@ -109,6 +119,12 @@ export default function LoginPage() {
         {error && (
           <div className="mb-3 p-2 bg-red-100 text-red-600 text-xs rounded">
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-3 p-3 bg-green-100 text-green-700 text-xs rounded">
+            ✅ {success}
           </div>
         )}
 

@@ -8,7 +8,7 @@ const { redisClient, parseTTLToSeconds } = require("../db/redisClient"); // <-- 
 
 const createUser = async ({ email, password, full_name }) => {
   const password_hash = await hashPassword(password);
-  // Create verification token (logic from controller, moved here)
+  // Create verification token
   const crypto = require("crypto");
   const verification_token = crypto.randomBytes(32).toString("hex");
 
@@ -17,13 +17,18 @@ const createUser = async ({ email, password, full_name }) => {
     password_hash,
     full_name,
     verification_token,
-    is_verified: true // Auto-verify for production without email setup
+    is_verified: false // Require email verification
   });
 
-  // Skip email sending for now
-  // const emailService = require("./emailService");
-  // emailService.sendVerificationEmail(user.email, user.verification_token)
-  //   .catch(console.error);
+  // Send verification email
+  const emailService = require("./emailService");
+  try {
+    await emailService.sendVerificationEmail(user.email, user.verification_token);
+    console.log("✅ Verification email sent to:", user.email);
+  } catch (error) {
+    console.error("❌ Failed to send verification email:", error);
+    // Don't fail registration if email fails, but log it
+  }
 
   return user;
 };
