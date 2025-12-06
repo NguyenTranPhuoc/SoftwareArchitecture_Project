@@ -10,12 +10,12 @@ echo "=========================================="
 
 # 1. Pull latest code
 echo "Step 1: Pulling latest code..."
-cd ~/SoftwareArchitecture_Project/zalo-clone
+cd ~/SoftwareArchitecture_Project
 git pull origin main
 
 # 2. Create .env for auth-user-monorepo
 echo "Step 2: Creating .env file for auth-user services..."
-cd ~/SoftwareArchitecture_Project/zalo-clone/src/auth-user-monorepo
+cd ~/SoftwareArchitecture_Project/src/auth-user-monorepo
 
 cat > .env << 'EOF'
 # Database Configuration (PostgreSQL for Auth/User services)
@@ -74,7 +74,7 @@ echo "✅ Database migrations complete"
 
 # 4. Restart auth-user services
 echo "Step 4: Restarting auth-user services..."
-cd ~/SoftwareArchitecture_Project/zalo-clone/src/auth-user-monorepo
+cd ~/SoftwareArchitecture_Project/src/auth-user-monorepo
 docker compose down
 docker compose up -d
 
@@ -82,7 +82,7 @@ echo "✅ Auth-user services restarted"
 
 # 5. Rebuild and restart backend
 echo "Step 5: Rebuilding backend service..."
-cd ~/SoftwareArchitecture_Project/zalo-clone
+cd ~/SoftwareArchitecture_Project
 docker compose -f docker-compose.prod.yml build backend
 docker compose -f docker-compose.prod.yml up -d backend
 
