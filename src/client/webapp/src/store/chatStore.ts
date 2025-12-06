@@ -327,7 +327,12 @@ export const useChatStore = create<ChatState>((set) => ({
   conversations: [], // Empty - will be loaded from API
   messages: [], // Empty - will be loaded from API
   selectedConversationId: "",
-  selectConversation: (id: string) => set({ selectedConversationId: id }),
+  selectConversation: (id: string) => set((state) => ({
+    selectedConversationId: id,
+    conversations: state.conversations.map(c => 
+      c.id === id ? { ...c, unreadCount: 0 } : c
+    ),
+  })),
   setConversations: (conversations: Conversation[]) => set({ conversations }),
   setMessages: (messages: Message[]) => set({ messages }),
   isInfoPanelOpen: false,
@@ -509,13 +514,35 @@ export const useChatStore = create<ChatState>((set) => ({
       }
 
       // New message from another user or not a duplicate, add it
+      const isCurrentConversation = state.selectedConversationId === msg.conversationId;
+      
+      // Check if conversation exists in the list
+      const conversationExists = state.conversations.some(c => c.id === msg.conversationId);
+      
+      let updatedConversations = state.conversations.map((c) => {
+        if (c.id === msg.conversationId) {
+          // Update conversation with new message preview
+          // Only increment unread count if it's not the current conversation or message is not from current user
+          const shouldIncrementUnread = !isCurrentConversation && !msg.isOwn;
+          return {
+            ...c,
+            lastMessagePreview: msg.content || (msg.type === 'image' ? '🖼️ Hình ảnh' : msg.type === 'file' ? '📎 Tệp đính kèm' : ''),
+            unreadCount: shouldIncrementUnread ? c.unreadCount + 1 : 0,
+          };
+        }
+        return c;
+      });
+      
+      // If conversation doesn't exist, we need to fetch it or create a placeholder
+      // For now, we'll just ensure the message is added - the conversation will appear when loaded
+      if (!conversationExists) {
+        console.log('Received message for conversation not in list:', msg.conversationId);
+        // You might want to trigger a conversation list refresh here
+      }
+      
       return {
         messages: [...state.messages, msg],
-        conversations: state.conversations.map((c) =>
-          c.id === msg.conversationId
-            ? { ...c, lastMessagePreview: msg.content, unreadCount: 0 }
-            : c
-        ),
+        conversations: updatedConversations,
       };
     }),
 

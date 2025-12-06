@@ -96,12 +96,62 @@ export default function ChatsPage() {
         {selectedId ? (
           <ChatWindow />
         ) : (
-          <div className="flex-col items-center justify-center h-full flex text-center px-6">
-            <p className="text-2xl font-semibold">Chào mừng đến với Zalo PC</p>
-            <p>
-              Khám phá những tiện ích hỗ trợ làm việc và trò chuyện cùng người
-              thân, bạn bè được tối ưu hoá cho máy tính của bạn.
-            </p>
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="h-14 border-b border-slate-200 bg-white px-4 flex items-center">
+              <h2 className="font-semibold text-lg">Tin nhắn</h2>
+            </div>
+            {/* Conversation list in main area */}
+            <div className="flex-1 overflow-y-auto bg-white">
+              {isLoadingConversations ? (
+                <div className="flex items-center justify-center h-full text-slate-400">
+                  Đang tải cuộc trò chuyện...
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="flex-col items-center justify-center h-full flex text-center px-6 text-slate-400">
+                  <p className="text-lg font-semibold mb-2">Chưa có cuộc trò chuyện nào</p>
+                  <p className="text-sm">Bắt đầu trò chuyện với bạn bè của bạn</p>
+                </div>
+              ) : (
+                conversations.map((conv) => {
+                  const peer = conv.type === 'direct' 
+                    ? conv.members.find(m => m.id !== me.id)
+                    : null;
+                  
+                  return (
+                    <button
+                      key={conv.id}
+                      onClick={() => selectConversation(conv.id)}
+                      className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-slate-50 border-b border-slate-100"
+                    >
+                      <div className="relative flex-shrink-0">
+                        <div className="w-12 h-12 rounded-full bg-slate-300 flex items-center justify-center text-base font-semibold">
+                          {conv.name.charAt(0)}
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-medium text-sm truncate">
+                            {conv.name}
+                          </span>
+                          <span className="text-xs text-slate-400">11:31</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm text-slate-500 truncate flex-1">
+                            {conv.lastMessagePreview || 'Bắt đầu cuộc trò chuyện'}
+                          </div>
+                          {conv.unreadCount > 0 && (
+                            <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex-shrink-0">
+                              {conv.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
       </div>
