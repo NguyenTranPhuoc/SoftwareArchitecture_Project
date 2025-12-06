@@ -23,6 +23,14 @@ export default function ChatsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
 
+  // Clear selection on mount if no conversation in URL
+  useEffect(() => {
+    const conversationId = searchParams.get('conversation');
+    if (!conversationId && selectedId) {
+      selectConversation(undefined);
+    }
+  }, []); // Run once on mount
+
   // Load conversations from API on mount
   useEffect(() => {
     const loadConversations = async () => {

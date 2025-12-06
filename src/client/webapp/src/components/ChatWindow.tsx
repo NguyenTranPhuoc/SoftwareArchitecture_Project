@@ -36,6 +36,14 @@ export default function ChatWindow() {
   const videoInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
   const isTypingRef = useRef(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [convMessages]);
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -77,7 +85,11 @@ export default function ChatWindow() {
                !formattedMessages.some(fm => fm.id === m.id)
         );
         
-        setMessages([...formattedMessages, ...existingRealtimeMessages]);
+        // Combine and sort by timestamp (oldest first)
+        const allMessages = [...formattedMessages, ...existingRealtimeMessages];
+        allMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        
+        setMessages(allMessages);
       } catch (error) {
         console.error('Failed to load messages:', error);
       } finally {
@@ -404,6 +416,8 @@ export default function ChatWindow() {
             onReact={handleReact}
           />
         ))}
+        {/* Invisible div for auto-scroll anchor */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* REPLY CONTEXT */}
