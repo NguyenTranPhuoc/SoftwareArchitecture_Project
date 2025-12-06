@@ -6,7 +6,6 @@ interface SidebarNavProps {
 const navItems = [
   { key: "chats", label: "Tin nhắn", icon: "💬", path: "/app/chats" },
   { key: "contacts", label: "Danh bạ", icon: "👥", path: "/app/contacts" },
-  { key: "cloud", label: "Cloud", icon: "☁️", path: "/app/chats?view=cloud" },
   { key: "settings", label: "Cài đặt", icon: "⚙️", path: "/app/profile" },
 ];
 

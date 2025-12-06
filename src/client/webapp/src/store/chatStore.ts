@@ -1,13 +1,45 @@
 import { create } from "zustand";
+import type { FriendProfile } from "../services/friendApi";
 
 export type MessageType = "text" | "image" | "file" | "video" | "sticker";
 
+// UserProfile type used in chat store (compatible with legacy code)
 export interface UserProfile {
   id: string;
   displayName: string;
-  avatarUrl?: string;
+  phoneNumber: string;
+  isFriend: boolean;
+  full_name?: string;
+  email?: string;
+  phone_number?: string;
+  avatar_url?: string;
+}
+
+export type MemberRole = "owner" | "deputy" | "member";
+
+export interface GroupMember extends FriendProfile {
+  role: MemberRole;
+  displayName?: string;
   phoneNumber?: string;
   isFriend?: boolean;
+}
+
+// Helper function to convert UserProfile to GroupMember
+function toGroupMember(
+  user: UserProfile,
+  role: MemberRole = "member"
+): GroupMember {
+  return {
+    id: user.id,
+    full_name: user.displayName || user.full_name || "",
+    email: user.email,
+    phone_number: user.phoneNumber || user.phone_number,
+    avatar_url: user.avatar_url,
+    displayName: user.displayName,
+    phoneNumber: user.phoneNumber,
+    isFriend: user.isFriend,
+    role,
+  };
 }
 
 export interface FileMetadata {
@@ -44,12 +76,6 @@ export interface Message {
 
 export type ConversationType = "direct" | "group";
 
-export type MemberRole = "owner" | "deputy" | "member";
-
-export interface GroupMember extends UserProfile {
-  role: MemberRole;
-}
-
 export interface Conversation {
   id: string;
   name: string;
@@ -58,7 +84,7 @@ export interface Conversation {
   unreadCount: number;
   isPinned?: boolean;
   isMuted?: boolean;
-  members: UserProfile[];
+  members: GroupMember[];
   // For groups only
   memberRoles?: Record<string, MemberRole>; // userId -> role
 }
@@ -75,7 +101,11 @@ interface ChatState {
   toggleInfoPanel: () => void;
   // Typing indicator state
   typingUsers: Record<string, { userId: string; userName: string }[]>; // conversationId -> array of typing users
-  setTypingUser: (conversationId: string, userId: string, userName: string) => void;
+  setTypingUser: (
+    conversationId: string,
+    userId: string,
+    userName: string
+  ) => void;
   removeTypingUser: (conversationId: string, userId: string) => void;
   // Online status state
   onlineUsers: Set<string>; // Set of online user IDs
@@ -109,8 +139,8 @@ interface ChatState {
   ) => void;
   receiveMessage: (msg: Message) => void;
   startDirectConversation: (user: UserProfile) => void;
-  createGroup: (name: string, members: UserProfile[]) => void;
-  addMembers: (conversationId: string, members: UserProfile[]) => void;
+  createGroup: (name: string, members: GroupMember[]) => void;
+  addMembers: (conversationId: string, members: GroupMember[]) => void;
   removeMember: (conversationId: string, memberId: string) => void;
   setMemberRole: (
     conversationId: string,
@@ -123,19 +153,27 @@ interface ChatState {
   recallMessage: (messageId: string) => void;
   deleteMessageForMe: (messageId: string) => void;
   addReaction: (messageId: string, emoji: string) => void;
-  sendReply: (conversationId: string, content: string, replyToMessageId: string) => void;
-  setCurrentUser: (user: UserProfile) => void;
+  sendReply: (
+    conversationId: string,
+    content: string,
+    replyToMessageId: string
+  ) => void;
+  setCurrentUser: (user: GroupMember) => void;
 }
 
 // Load user from localStorage (set after login)
 const getUserFromStorage = (): UserProfile => {
-  const userStr = localStorage.getItem('user');
+  const userStr = localStorage.getItem("user");
   if (userStr) {
     const user = JSON.parse(userStr);
     return {
       id: user.id,
-      displayName: user.displayName || user.username,
-      phoneNumber: '',
+      displayName: user.full_name || user.displayName || "",
+      full_name: user.full_name,
+      email: user.email,
+      phoneNumber: user.phone_number || user.phoneNumber || "",
+      phone_number: user.phone_number,
+      avatar_url: user.avatar_url,
       isFriend: true,
     };
   }
@@ -179,7 +217,11 @@ const mockConversations: Conversation[] = [
     lastMessagePreview: "Z chủ nhật này anh hẹn...",
     unreadCount: 2,
     isPinned: true,
-    members: [me, mockFriends[0], mockFriends[1]],
+    members: [
+      toGroupMember(me, "owner"),
+      toGroupMember(mockFriends[0]),
+      toGroupMember(mockFriends[1]),
+    ],
   },
   {
     id: "674612345678901234abcde2",
@@ -187,7 +229,7 @@ const mockConversations: Conversation[] = [
     type: "direct",
     lastMessagePreview: "Zalo chỉ hiển thị tin nhắn từ...",
     unreadCount: 0,
-    members: [me, mockFriends[0]],
+    members: [toGroupMember(me), toGroupMember(mockFriends[0])],
   },
 ];
 
@@ -276,8 +318,11 @@ export function validateFile(
     return {
       valid: false,
       error: `Định dạng file không được hỗ trợ. ${
-        type === "image" ? "Chỉ chấp nhận JPEG, PNG, GIF, WebP." :
-        type === "video" ? "Chỉ chấp nhận MP4, WebM, OGG." : ""
+        type === "image"
+          ? "Chỉ chấp nhận JPEG, PNG, GIF, WebP."
+          : type === "video"
+          ? "Chỉ chấp nhận MP4, WebM, OGG."
+          : ""
       }`,
     };
   }
@@ -327,12 +372,15 @@ export const useChatStore = create<ChatState>((set) => ({
   conversations: [], // Empty - will be loaded from API
   messages: [], // Empty - will be loaded from API
   selectedConversationId: undefined, // undefined means no conversation selected
-  selectConversation: (id: string | undefined) => set((state) => ({
-    selectedConversationId: id,
-    conversations: id ? state.conversations.map(c => 
-      c.id === id ? { ...c, unreadCount: 0 } : c
-    ) : state.conversations,
-  })),
+  selectConversation: (id: string | undefined) =>
+    set((state) => ({
+      selectedConversationId: id,
+      conversations: id
+        ? state.conversations.map((c) =>
+            c.id === id ? { ...c, unreadCount: 0 } : c
+          )
+        : state.conversations,
+    })),
   setConversations: (conversations: Conversation[]) => set({ conversations }),
   setMessages: (messages: Message[]) => set({ messages }),
   isInfoPanelOpen: false,
@@ -514,11 +562,14 @@ export const useChatStore = create<ChatState>((set) => ({
       }
 
       // New message from another user or not a duplicate, add it
-      const isCurrentConversation = state.selectedConversationId === msg.conversationId;
-      
+      const isCurrentConversation =
+        state.selectedConversationId === msg.conversationId;
+
       // Check if conversation exists in the list
-      const conversationExists = state.conversations.some(c => c.id === msg.conversationId);
-      
+      const conversationExists = state.conversations.some(
+        (c) => c.id === msg.conversationId
+      );
+
       let updatedConversations = state.conversations.map((c) => {
         if (c.id === msg.conversationId) {
           // Update conversation with new message preview
@@ -526,20 +577,29 @@ export const useChatStore = create<ChatState>((set) => ({
           const shouldIncrementUnread = !isCurrentConversation && !msg.isOwn;
           return {
             ...c,
-            lastMessagePreview: msg.content || (msg.type === 'image' ? '🖼️ Hình ảnh' : msg.type === 'file' ? '📎 Tệp đính kèm' : ''),
+            lastMessagePreview:
+              msg.content ||
+              (msg.type === "image"
+                ? "🖼️ Hình ảnh"
+                : msg.type === "file"
+                ? "📎 Tệp đính kèm"
+                : ""),
             unreadCount: shouldIncrementUnread ? c.unreadCount + 1 : 0,
           };
         }
         return c;
       });
-      
+
       // If conversation doesn't exist, we need to fetch it or create a placeholder
       // For now, we'll just ensure the message is added - the conversation will appear when loaded
       if (!conversationExists) {
-        console.log('Received message for conversation not in list:', msg.conversationId);
+        console.log(
+          "Received message for conversation not in list:",
+          msg.conversationId
+        );
         // You might want to trigger a conversation list refresh here
       }
-      
+
       return {
         messages: [...state.messages, msg],
         conversations: updatedConversations,
@@ -559,13 +619,38 @@ export const useChatStore = create<ChatState>((set) => ({
         return { selectedConversationId: existing.id };
       }
 
+      // Convert UserProfile to GroupMember for conversation
+      const userMember: GroupMember = {
+        id: user.id,
+        full_name: user.displayName || user.full_name || "",
+        email: user.email,
+        phone_number: user.phoneNumber || user.phone_number,
+        avatar_url: user.avatar_url,
+        displayName: user.displayName,
+        phoneNumber: user.phoneNumber,
+        isFriend: user.isFriend,
+        role: "member",
+      };
+
+      const meMember: GroupMember = {
+        id: state.me.id,
+        full_name: state.me.displayName || state.me.full_name || "",
+        email: state.me.email,
+        phone_number: state.me.phoneNumber || state.me.phone_number,
+        avatar_url: state.me.avatar_url,
+        displayName: state.me.displayName,
+        phoneNumber: state.me.phoneNumber,
+        isFriend: state.me.isFriend,
+        role: "member",
+      };
+
       const newConv: Conversation = {
         id: crypto.randomUUID(),
         name: user.displayName,
         type: "direct",
         lastMessagePreview: "",
         unreadCount: 0,
-        members: [state.me, user],
+        members: [meMember, userMember],
       };
 
       return {
@@ -577,14 +662,15 @@ export const useChatStore = create<ChatState>((set) => ({
   createGroup: (name, members) =>
     set((state) => {
       // Create group conversation with current user + selected members
-      const allMembers = [state.me, ...members];
+      const meMember = toGroupMember(state.me, "owner");
+      const allMembers = [meMember, ...members];
 
       // Initialize member roles: current user is owner, others are members
       const memberRoles: Record<string, MemberRole> = {
         [state.me.id]: "owner",
       };
       members.forEach((m) => {
-        memberRoles[m.id] = "member";
+        memberRoles[m.id] = m.role || "member";
       });
 
       const newGroup: Conversation = {
@@ -603,7 +689,7 @@ export const useChatStore = create<ChatState>((set) => ({
         conversationId: newGroup.id,
         senderId: state.me.id,
         content: `${members
-          .map((m) => m.displayName)
+          .map((m) => m.displayName || m.full_name || "Unknown")
           .join(", ")} được bạn thêm vào nhóm`,
         type: "text",
         createdAt: new Date().toISOString(),
@@ -642,7 +728,7 @@ export const useChatStore = create<ChatState>((set) => ({
         conversationId,
         senderId: state.me.id,
         content: `${membersToAdd
-          .map((m) => m.displayName)
+          .map((m) => m.displayName || m.full_name || "Unknown")
           .join(", ")} được bạn thêm vào nhóm`,
         type: "text",
         createdAt: new Date().toISOString(),
@@ -677,7 +763,9 @@ export const useChatStore = create<ChatState>((set) => ({
         id: crypto.randomUUID(),
         conversationId,
         senderId: state.me.id,
-        content: `${member.displayName} đã bị xóa khỏi nhóm`,
+        content: `${
+          member.displayName || member.full_name || "Unknown"
+        } đã bị xóa khỏi nhóm`,
         type: "text",
         createdAt: new Date().toISOString(),
         isOwn: true,
@@ -779,7 +867,9 @@ export const useChatStore = create<ChatState>((set) => ({
           // Remove reaction if already exists
           return {
             ...m,
-            reactions: existingReactions.filter((_, i) => i !== userReactionIndex),
+            reactions: existingReactions.filter(
+              (_, i) => i !== userReactionIndex
+            ),
           };
         }
         // Add new reaction
@@ -820,9 +910,18 @@ export const useChatStore = create<ChatState>((set) => ({
       };
     }),
 
-  setCurrentUser: (user: UserProfile) =>
+  setCurrentUser: (user: GroupMember) =>
     set(() => ({
-      me: user,
+      me: {
+        id: user.id,
+        displayName: user.displayName || user.full_name || "",
+        phoneNumber: user.phoneNumber || user.phone_number || "",
+        isFriend: user.isFriend ?? true,
+        full_name: user.full_name,
+        email: user.email,
+        phone_number: user.phone_number,
+        avatar_url: user.avatar_url,
+      },
     })),
 
   // Typing indicator methods
@@ -830,7 +929,7 @@ export const useChatStore = create<ChatState>((set) => ({
     set((state) => {
       const currentTyping = state.typingUsers[conversationId] || [];
       // Don't add if already typing
-      if (currentTyping.some(u => u.userId === userId)) {
+      if (currentTyping.some((u) => u.userId === userId)) {
         return state;
       }
       return {
@@ -844,7 +943,7 @@ export const useChatStore = create<ChatState>((set) => ({
   removeTypingUser: (conversationId: string, userId: string) =>
     set((state) => {
       const currentTyping = state.typingUsers[conversationId] || [];
-      const filtered = currentTyping.filter(u => u.userId !== userId);
+      const filtered = currentTyping.filter((u) => u.userId !== userId);
       return {
         typingUsers: {
           ...state.typingUsers,
@@ -878,7 +977,9 @@ export const useChatStore = create<ChatState>((set) => ({
 useChatStore.setState({
   getMemberRole: (conversationId: string, memberId: string): MemberRole => {
     const state: ChatState = useChatStore.getState();
-    const conv = state.conversations.find((c: Conversation) => c.id === conversationId);
+    const conv = state.conversations.find(
+      (c: Conversation) => c.id === conversationId
+    );
     if (!conv || conv.type !== "group" || !conv.memberRoles) {
       return "member";
     }
@@ -886,7 +987,9 @@ useChatStore.setState({
   },
   isGroupOwner: (conversationId: string): boolean => {
     const state: ChatState = useChatStore.getState();
-    const conv = state.conversations.find((c: Conversation) => c.id === conversationId);
+    const conv = state.conversations.find(
+      (c: Conversation) => c.id === conversationId
+    );
     if (!conv || conv.type !== "group" || !conv.memberRoles) {
       return false;
     }
