@@ -105,7 +105,7 @@ export class ConversationModel {
     const result = await this.getCollection().updateOne(
       { _id: new ObjectId(conversationId) },
       {
-        $addToSet: { participants: new ObjectId(userId) }, // ✅ Convert userId to ObjectId
+        $addToSet: { participants: userId }, // Keep as UUID string
         $set: { updatedAt: new Date() },
       }
     );
@@ -117,7 +117,7 @@ export class ConversationModel {
     const result = await this.getCollection().updateOne(
       { _id: new ObjectId(conversationId) },
       {
-        $pull: { participants: new ObjectId(userId) }, // ✅ Convert userId to ObjectId
+        $pull: { participants: userId }, // Keep as UUID string
         $set: { updatedAt: new Date() },
       }
     );
@@ -130,7 +130,7 @@ export class ConversationModel {
     const result = await this.getCollection().updateOne(
       { _id: new ObjectId(conversationId) },
       {
-        $addToSet: { archivedBy: new ObjectId(userId) },
+        $addToSet: { archivedBy: userId }, // Keep as UUID string
         $set: { isArchived: true, updatedAt: new Date() },
       }
     );
@@ -142,7 +142,7 @@ export class ConversationModel {
     const result = await this.getCollection().updateOne(
       { _id: new ObjectId(conversationId) },
       {
-        $pull: { archivedBy: new ObjectId(userId) },
+        $pull: { archivedBy: userId }, // Keep as UUID string
         $set: { updatedAt: new Date() },
       }
     );
@@ -183,7 +183,7 @@ export class ConversationModel {
   async getUserConversationsWithLastMessage(userId: string) {
     return await this.getCollection()
       .aggregate([
-        { $match: { participants: new ObjectId(userId) } },
+        { $match: { participants: userId } }, // Use UUID string directly
         {
           $lookup: {
             from: 'messages',

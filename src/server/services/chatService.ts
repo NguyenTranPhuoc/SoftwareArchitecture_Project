@@ -133,12 +133,11 @@ export class ChatService {
       // Invalidate conversation cache
       await this.invalidateConversationCache(conversationId);
 
-      // ✅ Convert ObjectId[] to string[] for cache keys
-      const participantIds = conversation.participants.map(id => id.toString());
-      await this.invalidateUserConversationsCache(participantIds);
+      // participants are already strings (UUIDs), no need to convert
+      await this.invalidateUserConversationsCache(conversation.participants);
 
       // Update unread counts for all participants except sender
-      for (const participantId of participantIds) {
+      for (const participantId of conversation.participants) {
         if (participantId !== senderId) {
           await this.incrementUnreadCount(participantId, conversationId);
         }
