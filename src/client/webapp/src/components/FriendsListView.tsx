@@ -49,7 +49,7 @@ export default function FriendsListView() {
             id: friend.id,
             displayName: friend.full_name,
             avatarUrl: friend.avatar_url,
-            phoneNumber: friend.phone_number,
+            phoneNumber: friend.phone_number || '',
             isFriend: true,
           }
         ],

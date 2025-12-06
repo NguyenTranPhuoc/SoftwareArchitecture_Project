@@ -35,6 +35,7 @@ export interface FriendProfile {
   full_name: string;
   avatar_url?: string;
   email?: string;
+  phone_number?: string;
   friendship_id?: string;
 }
 
