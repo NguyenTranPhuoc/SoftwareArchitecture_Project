@@ -28,11 +28,11 @@ export default function FriendsListView() {
   // Create conversation mutation
   const createChatMutation = useMutation({
     mutationFn: async (friendId: string) => {
-      const response: any = await api.createConversation({
+      const conversation: any = await api.createConversation({
         participants: [me.id, friendId],
         type: 'direct',
       });
-      return response.data;
+      return conversation; // api.request already unwraps the data
     },
     onSuccess: (conversation: any) => {
       // Navigate to the chat page with the new conversation
