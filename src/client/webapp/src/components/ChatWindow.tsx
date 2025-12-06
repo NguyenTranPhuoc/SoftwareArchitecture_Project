@@ -38,13 +38,6 @@ export default function ChatWindow() {
   const isTypingRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [convMessages]);
-
   // Load messages when conversation is selected
   useEffect(() => {
     const loadMessages = async () => {
@@ -104,6 +97,13 @@ export default function ChatWindow() {
   const convMessages = messages.filter(
     (m) => m.conversationId === selectedConversationId && !m.isDeletedForMe
   );
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [convMessages.length, selectedConversationId]); // Use length to avoid re-render on every message object change
 
   if (!conv) return null;
 
