@@ -10,6 +10,40 @@ This guide walks through a complete fresh deployment on your GCP VM, starting fr
 
 ---
 
+
+---
+
+## IMPORTANT: Gitignored Files Checklist
+
+The following critical files are **NOT in the GitHub repository** and must be created/uploaded manually on the VM:
+
+### 1. Environment Variables (.env files)
+- **Location**: `~/SoftwareArchitecture_Project/src/auth-user-monorepo/.env`
+- **Status**:  NOT in repository (gitignored)
+- **Action Required**: Create manually (covered in Phase 5)
+
+### 2. GCP Service Account Key
+- **Location**: `~/SoftwareArchitecture_Project/GCS/zola-478416-4990089e3062.json`
+- **Status**:  NOT in repository (gitignored for security)
+- **Purpose**: Google Cloud Storage authentication for image/file uploads
+- **Action Required**: Upload from local machine if using GCS features
+
+### 3. Node Modules
+- **Location**: `node_modules/` directories
+- **Status**:  NOT in repository (gitignored)
+- **Action Required**: Run `npm install` or use Docker (automatic during build)
+
+### 4. Build Outputs
+- **Location**: `dist/`, `build/` directories
+- **Status**:  NOT in repository (gitignored)
+- **Action Required**: Automatic during Docker build process
+
+### 5. Configuration Files
+- **Location**: `config/*.json` (if any custom configs exist)
+- **Status**:  NOT in repository (gitignored)
+- **Action Required**: Create if needed for your environment
+
+---
 ## Phase 1: Clean Up Existing Deployment (5 minutes)
 
 ### 1.1 SSH into VM
@@ -59,6 +93,50 @@ git log --oneline -5
 ```
 
 ---
+
+
+---
+
+## Phase 2.5: Upload GCP Service Account Key (Optional - If Using GCS)
+
+**Skip this phase if you don't need Google Cloud Storage features (image uploads, file storage)**
+
+### 2.5.1 Check if GCS is Needed
+```bash
+# Check if your code references GCS
+cd ~/SoftwareArchitecture_Project
+grep -r "google-cloud" . --include="*.json" --include="*.js" --include="*.ts"
+```
+
+### 2.5.2 Create GCS Directory
+```bash
+mkdir -p ~/SoftwareArchitecture_Project/GCS
+```
+
+### 2.5.3 Upload Service Account Key from Local Machine
+
+**On your local machine (Windows PowerShell)**:
+```powershell
+# Copy the service account key to VM
+scp "F:\14_CaoHoc\Ky2\Ki?n trúc ph?n m?m\Zola2\GCS\zola-478416-4990089e3062.json" your-vm-user@34.124.227.173:~/SoftwareArchitecture_Project/GCS/
+```
+
+**On VM - Verify upload**:
+```bash
+ls -lh ~/SoftwareArchitecture_Project/GCS/
+# Should show: zola-478416-4990089e3062.json
+
+# Set proper permissions (important for security)
+chmod 600 ~/SoftwareArchitecture_Project/GCS/*.json
+```
+
+### 2.5.4 Update .env with GCS Path (Later in Phase 5)
+When creating .env file, add:
+```bash
+# GCP Configuration (if using GCS)
+GCS_BUCKET_NAME=your-bucket-name
+GOOGLE_APPLICATION_CREDENTIALS=./GCS/zola-478416-4990089e3062.json
+```
 
 ## Phase 3: Fix Backend Email Verification Bug (10 minutes)
 
@@ -426,5 +504,7 @@ docker system prune -a -f
 
 **Last Updated**: December 7, 2025  
 **Tested On**: GCP VM, Commit 77fdaf6 + verification fix
+
+
 
 
