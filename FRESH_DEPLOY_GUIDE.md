@@ -113,7 +113,45 @@ grep -r "google-cloud" . --include="*.json" --include="*.js" --include="*.ts"
 mkdir -p ~/SoftwareArchitecture_Project/GCS
 ```
 
-### 2.5.3 Upload Service Account Key from Local Machine
+### 2.5.3 Option A: Create Service Account Key Directly on VM (Recommended)
+
+**On VM**:
+```bash
+# Install gcloud CLI if not already installed
+curl https://sdk.cloud.google.com | bash
+exec -l $SHELL  # Restart shell
+
+# Initialize gcloud
+gcloud init
+# Follow prompts to:
+# 1. Login with your Google account
+# 2. Select project: zola-478416 (or your project ID)
+
+# Create service account (if not exists)
+gcloud iam service-accounts create zalo-gcs-service \
+  --display-name="Zalo GCS Service Account" \
+  --project=zola-478416
+
+# Grant Storage Admin role to service account
+gcloud projects add-iam-policy-binding zola-478416 \
+  --member="serviceAccount:zalo-gcs-service@zola-478416.iam.gserviceaccount.com" \
+  --role="roles/storage.admin"
+
+# Create and download service account key
+mkdir -p ~/SoftwareArchitecture_Project/GCS
+gcloud iam service-accounts keys create \
+  ~/SoftwareArchitecture_Project/GCS/zola-478416-4990089e3062.json \
+  --iam-account=zalo-gcs-service@zola-478416.iam.gserviceaccount.com
+
+# Set proper permissions (important for security)
+chmod 600 ~/SoftwareArchitecture_Project/GCS/*.json
+
+# Verify the key was created
+ls -lh ~/SoftwareArchitecture_Project/GCS/
+cat ~/SoftwareArchitecture_Project/GCS/zola-478416-4990089e3062.json | jq '.type, .project_id, .client_email'
+```
+
+### 2.5.3 Option B: Upload Existing Key from Local Machine
 
 **On your local machine (Windows PowerShell)**:
 ```powershell
@@ -504,6 +542,7 @@ docker system prune -a -f
 
 **Last Updated**: December 7, 2025  
 **Tested On**: GCP VM, Commit 77fdaf6 + verification fix
+
 
 
 
